@@ -203,6 +203,32 @@ document.addEventListener('DOMContentLoaded', () => {
             cgContainer.innerHTML = `<li><span class="cg-point">Focus on core professional traits and mutual business goals.</span></li>`;
         }
 
+        // Render Upcoming Events
+        const eventsContainer = document.getElementById('dossier-upcoming-events');
+        eventsContainer.innerHTML = '';
+        if (dossier.upcoming_events && dossier.upcoming_events.length > 0) {
+            dossier.upcoming_events.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `📍 <span>${escapeHTML(item)}</span>`;
+                eventsContainer.appendChild(li);
+            });
+        } else {
+            eventsContainer.innerHTML = `<li style="background:rgba(255,255,255,0.02);border-color:transparent;color:var(--text-muted)">No registered public events.</li>`;
+        }
+
+        // Render Cold Icebreakers
+        const coldIcebreakersContainer = document.getElementById('dossier-cold-icebreakers');
+        coldIcebreakersContainer.innerHTML = '';
+        if (dossier.cold_icebreakers && dossier.cold_icebreakers.length > 0) {
+            dossier.cold_icebreakers.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                coldIcebreakersContainer.appendChild(li);
+            });
+        } else {
+            coldIcebreakersContainer.innerHTML = `<li>No cold icebreakers compiled.</li>`;
+        }
+
         // Icebreakers
         const icebreakersContainer = document.getElementById('dossier-icebreakers');
         icebreakersContainer.innerHTML = '';

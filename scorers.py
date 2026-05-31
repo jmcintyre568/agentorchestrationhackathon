@@ -37,10 +37,14 @@ class DossierCompletenessScorer(weave.Scorer):
             missing.append("ats_red_flags")
         if len(output.recommended_improvements) < 1:
             missing.append("recommended_improvements")
+        if len(output.upcoming_events) < 1:
+            missing.append("upcoming_events")
+        if len(output.cold_icebreakers) < 1:
+            missing.append("cold_icebreakers")
         if len(output.evidence_ledger) < 5:
             missing.append("evidence_ledger (need >= 5)")
 
-        total_checks = 7
+        total_checks = 9
         passed = total_checks - len(missing)
         return {"score": passed / total_checks, "missing_fields": missing}
 

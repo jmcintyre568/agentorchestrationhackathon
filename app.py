@@ -93,7 +93,7 @@ class DossierResponse(BaseModel):
     email: str = Field(description="Scraped professional email address (synthetic or public record).")
     role: str = Field(description="Interviewer's current role and title.")
     company: str = Field(description="Interviewer's current company.")
-    bio: str = Field(description="A detailed professional bio (3-4 sentences) summarizing their career, focus, and public footprint.")
+    bio: str = Field(description="A detailed professional bio (3-4 sentences) summarizing their career, focus, public footprint, and the city they are based in.")
     linkedin_picture_url: str = Field(
         default="",
         description="Public URL of the linkedin profile picture if available, else empty string."
@@ -123,6 +123,14 @@ class DossierResponse(BaseModel):
     )
     recommended_improvements: list[RecommendedImprovement] = Field(
         description="Structural changes and credentials you should have to avoid being filtered out."
+    )
+    upcoming_events: list[str] = Field(
+        default_factory=list,
+        description="List of upcoming conferences, summits, or local industry meetups the professional is highly likely to attend."
+    )
+    cold_icebreakers: list[str] = Field(
+        default_factory=list,
+        description="Cold conversation starters for physical summits based on hobbies, interests, and professional milestones."
     )
     evidence_ledger: list[EvidenceItem] = Field(
         description="Every dossier claim mapped to a professional source with confidence."
@@ -205,13 +213,22 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
     is_product = any(keyword in role_lower for keyword in ("product", "manager", "pm", "design", "ux", "ui", "creative"))
 
     # Determine structured details depending on the role
-    role_title = role.strip().title() if role.strip() else "Senior Professional"
+    if is_tech:
+        role_title = "Staff Infrastructure Engineer"
+        city = "San Francisco, CA"
+    elif is_product:
+        role_title = "VP of Product"
+        city = "New York City, NY"
+    else:
+        role_title = "Director of Talent Acquisition"
+        city = "Austin, TX"
+
     email = f"{recruiter_name.lower().replace(' ', '.')}@{company.lower().replace(' ', '')}.com"
     linkedin_picture_url = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop"
 
     if is_tech:
         bio = (
-            f"{recruiter_name} is a highly accomplished {role_title} at {company} with over 8 years of hands-on "
+            f"{recruiter_name} is a highly accomplished {role_title} based in {city} with over 8 years of hands-on "
             f"experience building scalable software architectures, distributed cloud-native infrastructures, "
             f"and high-efficiency API services. Passionate about technical excellence and clean code, "
             f"{recruiter_name} actively drives engineering standards, platform reliability, and CI/CD "
@@ -265,6 +282,16 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
                 implementation="Add a clear bullet point highlighting query performance tuning, index structuring, or database migration experience under your most recent role."
             )
         ]
+        upcoming_events = [
+            "KubeCon + CloudNativeCon North America (Chicago)",
+            f"{company} Developer Summit (San Francisco)",
+            "AWS re:Invent (Las Vegas)"
+        ]
+        cold_icebreakers = [
+            "I saw your recent post about cycling—how do you manage to balance high-mileage training with scaling massive system architectures?",
+            "I noticed you maintain active open-source repositories; what's your take on the industry transition toward platform engineering frameworks?",
+            "Are you attending any of the cloud scaling workshops at the summit later this afternoon?"
+        ]
         ledger_claims = [
             (f"Interviewer {recruiter_name} values direct, metrics-driven technical communication.", "Public Github & LinkedIn Metadata", "high"),
             (f"Recent hires skew heavily toward modern containerized environments at {company}.", "Company Careers Page", "high"),
@@ -274,7 +301,7 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
         ]
     elif is_product:
         bio = (
-            f"{recruiter_name} is a visionary Product Leader at {company}, specializing in orchestrating high-impact "
+            f"{recruiter_name} is a visionary Product Leader based in {city}, specializing in orchestrating high-impact "
             f"cross-functional teams, shaping strategic product roadmaps, and running customer-centric discovery loops. "
             f"Known for driving user-growth initiatives and collaborative agile design processes, {recruiter_name} has successfully "
             f"launched multiple flagship features that scaled {company}'s market footprint."
@@ -322,6 +349,16 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
                 implementation="Spend 2 hours performing user research against 3 user journeys of {company}'s current site feature, documenting pain points and solution suggestions in a brief Loom walkthrough."
             )
         ]
+        upcoming_events = [
+            "ProductCon (New York City)",
+            "Mind the Product Leadership Summit",
+            f"{company} Annual Innovation Expo"
+        ]
+        cold_icebreakers = [
+            "I read your piece on growth-led UX methodologies—how has user telemetry shifted your roadmap priorities this quarter?",
+            "I love your amateur photography shots! Are you planning to shoot any local landmarks while you're in town for the summit?",
+            "Are you catching the keynote on collaborative design systems tomorrow morning?"
+        ]
         ledger_claims = [
             (f"Interviewer {recruiter_name} prioritizes data-led product discovery and user feedback loops.", "Public Case Studies & Articles", "high"),
             (f"Recent product management roles at {company} emphasize cross-functional scrum leadership.", "Company Careers Page", "high"),
@@ -331,7 +368,7 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
         ]
     else:
         bio = (
-            f"{recruiter_name} is a results-oriented leader at {company}, focused on driving operational excellence, "
+            f"{recruiter_name} is a results-oriented leader based in {city}, focused on driving operational excellence, "
             f"cross-functional team collaboration, and scaling business growth initiatives. With a proven record "
             f"of successful project delivery, {recruiter_name} excels at aligning organizational resources, "
             f"optimizing key workflows, and cultivating highly productive work environments."
@@ -364,6 +401,16 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
                 impact=f"{company} seeks team members with high execution bias who can self-direct and scale operations independently.",
                 implementation="Synthesize a detailed project case study highlighting a challenge, your strategic plan, the execution milestones, and final business outcomes."
             )
+        ]
+        upcoming_events = [
+            "Talent & People Operations Summit",
+            "Tech Recruitment & HR Tech Expo",
+            "Local Startup Meetup & Mixer"
+        ]
+        cold_icebreakers = [
+            "I noticed your passion for amateur photography—what's your favorite gear setup when traveling for tech conferences?",
+            "How do you see company culture evolving with the shift toward outcomes-oriented cross-functional collaboration?",
+            "Are you attending the panel discussion on AI-driven talent sourcing this afternoon?"
         ]
         ledger_claims = [
             (f"Interviewer {recruiter_name} values structured, proactive operational management.", "Public LinkedIn Metadata", "high"),
@@ -410,7 +457,9 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
         ats_red_flags=red_flags,
         recommended_improvements=improvements,
         evidence_ledger=evidence_ledger,
-        linkedin_picture_url=linkedin_picture_url
+        linkedin_picture_url=linkedin_picture_url,
+        upcoming_events=upcoming_events,
+        cold_icebreakers=cold_icebreakers
     )
 
 
@@ -537,7 +586,7 @@ def council_vote(
 
     Recruiter: {recruiter_name}
     Company: {company}
-    Role: {role}
+    Role: {role} (Note: This is the target role the candidate is applying for. Do NOT use this target role directly as the recruiter/interviewer's current title/role. Instead, discover or generate their actual current title at the company from the OSINT profile.)
     OSINT Profile: {osint}
     Company Strategy: {corp}
     Candidate Resume: {resume}
@@ -545,12 +594,14 @@ def council_vote(
     Ensure you populate the response schemas with extreme detail:
     - name: The scanned name of the interviewer.
     - email: A professional email address for the interviewer.
-    - role: The interviewer's current title.
+    - role: The interviewer's actual current title/role at the company, NOT the candidate's target role.
     - company: The interviewer's current company.
-    - bio: A highly detailed professional bio (3-4 sentences) summarizing their career, focus, and public footprint.
+    - bio: A highly detailed professional bio (3-4 sentences) summarizing their career, focus, public footprint, and explicitly including the city they are based in (e.g. '...based in Seattle, WA...').
     - linkedin_picture_url: A public professional photo URL if available, otherwise a high-quality professional Unsplash placeholder like 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop'.
     - ats_red_flags: Provide at least 3 critical compliance/parsing red flags with exact, actionable fix suggestions and severity ("critical" or "high"). DO NOT leave this empty.
     - recommended_improvements: Provide at least 3 high-impact structural improvement recommendations with concrete 2-hour action plans. DO NOT leave this empty.
+    - upcoming_events: List 2-3 upcoming summits, tech conferences, or local industry events the interviewer is highly likely to attend based on their footprint.
+    - cold_icebreakers: Provide 3 cold networking conversation starters for physical summits. Make 1-2 based on their personal hobbies/interests (e.g., running, photography) to get them talking, and 1-2 based on their work milestones (recent launch or open source repository).
     - common_ground: At least 3 detailed shared-interest or alignment points.
     - icebreakers: Exactly 3 specific professional starters.
     - smart_questions: Exactly 2 high-impact reverse-engineering questions.
