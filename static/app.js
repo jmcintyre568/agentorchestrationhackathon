@@ -203,10 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
             startTime: Date.now(),
             active: true,
             tick: 0,
-            // Per-step timers: each of the first 2 steps gets a random duration
+            // Per-step timers: each of the first 2 steps gets a random duration (super-fast now that API has credits)
             stepDurations: [
-                randBetween(3000, 6000),  // OSINT: 3-6s
-                randBetween(3500, 6500),  // Corp Intel: 3.5-6.5s
+                randBetween(800, 1500),   // OSINT: 0.8-1.5s
+                randBetween(800, 1500),   // Corp Intel: 0.8-1.5s
                 Infinity,                 // Council: runs until fetch completes
             ],
             stepStartTime: Date.now(),
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         steps.osint.classList.add('active');
         logToConsole('osint', '[SYS] Initializing Swarm...', 'system');
 
-        // Stream logs every 400ms
+        // Stream logs every 150ms for hyper-responsive feel
         liveLoaderInterval = setInterval(() => {
             if (!loaderStepsState.active) return;
 
@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (state.seqIndex < seq.length) {
                 // Calculate when each sequence item should fire
                 const interval = stepDuration === Infinity
-                    ? 600 + randBetween(100, 400) // for council, just pace them out
+                    ? 250 + randBetween(50, 150) // for council, just pace them out rapidly
                     : stepDuration / (seq.length + 1);
                 const targetTime = interval * (state.seqIndex + 1);
 
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     logToConsole(currentId, waitLine(), 'system');
                 }
             }
-        }, 400);
+        }, 150);
     }
 
     function stopLiveLoaderAndResolve() {

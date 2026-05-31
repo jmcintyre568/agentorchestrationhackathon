@@ -662,12 +662,8 @@ def orchestrator_spine(request: AnalysisRequest) -> DossierResponse:
             request.recruiter_name, request.company, request.linkedin_url
         )
 
-        time.sleep(6)  # Base delay to protect free-tier limits
-
         # Step 2: Corporate Intel
         company_bottlenecks = corporate_intel_subagent(request.company)
-
-        time.sleep(6)  # Base delay to protect free-tier limits
 
         # Step 3: Synthesis Council
         return council_vote(
