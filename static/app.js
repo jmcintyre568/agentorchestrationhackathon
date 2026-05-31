@@ -140,22 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dossier-role').textContent = dossier.role || 'Senior Lead';
         document.getElementById('dossier-company').textContent = dossier.company || company;
 
-        // Render LinkedIn picture if available
-        const avatarContainer = document.getElementById('dossier-avatar-container');
-        const avatarSvg = document.getElementById('dossier-avatar-svg');
-        const existingImg = avatarContainer.querySelector('img');
-        if (existingImg) {
-            existingImg.remove();
-        }
-        if (dossier.linkedin_picture_url) {
-            avatarSvg.style.display = 'none';
-            const img = document.createElement('img');
-            img.src = dossier.linkedin_picture_url;
-            img.alt = dossier.name || recruiter;
-            avatarContainer.appendChild(img);
-        } else {
-            avatarSvg.style.display = 'block';
-        }
+
 
         // ATS Red Flags (Critical Gaps)
         const redFlagsContainer = document.getElementById('dossier-red-flags');
