@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (item.source_url && item.source_url.startsWith('http')) {
                     sourceLink = `<a href="${item.source_url}" target="_blank" class="cg-source-link">Source</a>`;
                 } else if (item.source_url) {
-                    sourceLink = `<span class="cg-source-link" style="border-color:transparent;background:rgba(255,255,255,0.02);color:var(--text-secondary)">${escapeHTML(item.source_url)}</span>`;
+                    sourceLink = `<span class="cg-source-link">${escapeHTML(item.source_url)}</span>`;
                 }
                 
                 li.innerHTML = `

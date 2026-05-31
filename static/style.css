@@ -729,28 +729,30 @@ textarea {
     border-radius: 8px;
     padding: 1rem 1.25rem;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
 }
 
 .cg-point {
     font-size: 0.95rem;
     font-weight: 500;
-    flex: 1;
+    line-height: 1.5;
 }
 
 .cg-source-link {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--accent-teal);
+    opacity: 0.85;
     text-decoration: none;
-    border: 1px solid rgba(6, 182, 212, 0.2);
-    padding: 0.25rem 0.6rem;
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    padding: 0.15rem 0.45rem;
     border-radius: 4px;
-    background-color: rgba(6, 182, 212, 0.03);
-    white-space: nowrap;
+    background-color: rgba(6, 182, 212, 0.02);
+    white-space: normal;
     transition: var(--transition-smooth);
-    flex-shrink: 0;
+    display: inline-block;
+    margin-top: 0.2rem;
 }
 
 .cg-source-link:hover {
