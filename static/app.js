@@ -137,8 +137,38 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dossier-name').textContent = dossier.name || recruiter;
         document.getElementById('dossier-email').textContent = dossier.email || `${recruiter.toLowerCase().replace(' ', '.')}@${company.toLowerCase().replace(' ', '')}.com`;
         document.getElementById('dossier-bio').textContent = dossier.bio || '';
-        document.getElementById('dossier-role').textContent = dossier.role || 'Senior Lead';
-        document.getElementById('dossier-company').textContent = dossier.company || company;
+        const roleEl = document.getElementById('dossier-role');
+        const roleContainer = roleEl.closest('.vibe-style');
+        const hasRole = dossier.role && dossier.role.trim() && dossier.role.toLowerCase() !== 'not found' && dossier.role.toLowerCase() !== 'unknown' && dossier.role.toLowerCase() !== 'not available';
+        
+        if (hasRole) {
+            roleEl.textContent = dossier.role;
+            if (roleContainer) roleContainer.style.display = 'block';
+        } else {
+            roleEl.textContent = '';
+            if (roleContainer) roleContainer.style.display = 'none';
+        }
+
+        const companyEl = document.getElementById('dossier-company');
+        const companyContainer = companyEl.closest('.vibe-mirror');
+        const hasCompany = dossier.company && dossier.company.trim() && dossier.company.toLowerCase() !== 'not found' && dossier.company.toLowerCase() !== 'unknown';
+        
+        if (hasCompany) {
+            companyEl.textContent = dossier.company;
+            if (companyContainer) companyContainer.style.display = 'block';
+        } else {
+            companyEl.textContent = '';
+            if (companyContainer) companyContainer.style.display = 'none';
+        }
+
+        const vibeCard = roleEl.closest('.vibe-card');
+        if (vibeCard) {
+            if (!hasRole && !hasCompany) {
+                vibeCard.style.display = 'none';
+            } else {
+                vibeCard.style.display = 'flex';
+            }
+        }
 
 
 
