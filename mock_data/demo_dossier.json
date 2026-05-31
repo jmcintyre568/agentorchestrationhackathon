@@ -1,0 +1,64 @@
+{
+  "summary": "Alex Mercer is a Senior Engineering Manager who values direct, execution-focused communication. Acme Robotics is modernizing its platform stack and hiring for real-time data and backend roles.",
+  "common_ground": [
+    {
+      "point": "Both emphasize shipping production systems over theoretical architecture debates.",
+      "source_url": ""
+    },
+    {
+      "point": "Shared interest in open-source web tooling and developer experience.",
+      "source_url": ""
+    }
+  ],
+  "icebreakers": [
+    "I noticed your team has been hiring Python/AWS engineers — how is the platform team balancing greenfield services vs. legacy migration?",
+    "Your GitHub activity around Next.js boilerplates is impressive — do you use those patterns internally or mainly for community engagement?",
+    "What's one initiative this quarter where execution speed mattered more than perfect design?"
+  ],
+  "smart_questions": [
+    "What does success look like for this role in the first 90 days — shipping a feature, owning a service, or unblocking the team?",
+    "Where is the biggest engineering bottleneck right now: CI/CD reliability, cross-team API contracts, or on-call load?"
+  ],
+  "vibe": {
+    "style": "Direct and bullet-oriented; values clarity and execution over long narratives.",
+    "how_to_mirror": "Lead with outcomes, use concise bullets, and anchor answers in shipped work and metrics."
+  },
+  "resume_gaps": [
+    {
+      "gap": "Limited explicit Kubernetes/production SRE exposure on resume.",
+      "fix": "Prepare one story about deploying and operating a Python service on AWS with monitoring and rollback."
+    },
+    {
+      "gap": "No mention of mentoring or hiring loop participation.",
+      "fix": "Highlight one example of onboarding a junior engineer or leading a small project team."
+    }
+  ],
+  "trapdoor_project": "In 2 hours, scaffold a FastAPI health-check microservice with Dockerfile, a single pytest, and a README section on how you'd deploy it to AWS — mirrors the team's stack and shows execution bias.",
+  "evidence_ledger": [
+    {
+      "claim": "Interviewer prefers direct, execution-focused communication.",
+      "source_url": "",
+      "confidence": "high"
+    },
+    {
+      "claim": "Recent hires skew toward React/Node and Python/AWS.",
+      "source_url": "",
+      "confidence": "high"
+    },
+    {
+      "claim": "Active open-source focus on Next.js boilerplates.",
+      "source_url": "",
+      "confidence": "med"
+    },
+    {
+      "claim": "Company is migrating toward event-driven microservices.",
+      "source_url": "",
+      "confidence": "med"
+    },
+    {
+      "claim": "Platform team faces CI/CD reliability bottlenecks.",
+      "source_url": "",
+      "confidence": "med"
+    }
+  ]
+}

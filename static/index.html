@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatability Engine — High-Fidelity OSINT Dossier</title>
+    <!-- Google Fonts: Inter for UI, Outfit for Headers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="glow-mesh glow-1"></div>
+    <div class="glow-mesh glow-2"></div>
+    
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo-orb"></div>
+            <h1>RELATABILITY<span>ENGINE</span></h1>
+        </div>
+        <div class="header-badge">
+            <span class="status-dot green"></span>
+            <span>Agent Orchestration Swarm Active</span>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <!-- Input Panel -->
+        <section class="panel glass input-panel" id="input-section">
+            <div class="panel-header">
+                <h2>Generate OSINT Dossier</h2>
+                <p>Socially engineer your next interview by analyzing your recruiter's public digital footprint.</p>
+            </div>
+            
+            <form id="analyzer-form">
+                <div class="form-row grid-2">
+                    <div class="form-group">
+                        <label for="recruiter_name">Interviewer Name</label>
+                        <input type="text" id="recruiter_name" name="recruiter_name" required placeholder="e.g. Alex Mercer" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Target Company</label>
+                        <input type="text" id="company" name="company" required placeholder="e.g. Acme Robotics" autocomplete="off">
+                    </div>
+                </div>
+                
+                <div class="form-row grid-2">
+                    <div class="form-group">
+                        <label for="role">Target Role</label>
+                        <input type="text" id="role" name="role" required placeholder="e.g. Senior Software Engineer" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="linkedin_url">Interviewer LinkedIn (Optional)</label>
+                        <input type="url" id="linkedin_url" name="linkedin_url" placeholder="https://linkedin.com/in/username">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="resume_text">Your Resume / Experience</label>
+                    <textarea id="resume_text" name="resume_text" required placeholder="Paste your resume or a summary of your professional skills..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-submit" id="btn-submit">
+                    <span>Synthesize Dossier</span>
+                    <div class="btn-glow"></div>
+                </button>
+            </form>
+        </section>
+
+        <!-- Loading State Overlay -->
+        <section class="panel glass loading-panel hidden" id="loading-section">
+            <div class="scanner-container">
+                <div class="scanner-radar">
+                    <div class="scanner-sweep"></div>
+                    <div class="scanner-ping"></div>
+                </div>
+            </div>
+            <h3>Orchestrating Agent Swarm...</h3>
+            <p class="loader-subtitle">Evaluating candidate-recruiter alignment across public directories</p>
+            
+            <div class="agent-timeline">
+                <div class="timeline-step" id="step-osint">
+                    <div class="step-indicator">
+                        <div class="step-circle"></div>
+                    </div>
+                    <div class="step-content">
+                        <h4>OSINT Agent</h2>
+                        <p>Scraping public professional footprint, Github, and social meta...</p>
+                    </div>
+                </div>
+                <div class="timeline-step" id="step-corp">
+                    <div class="step-indicator">
+                        <div class="step-circle"></div>
+                    </div>
+                    <div class="step-content">
+                        <h4>Corporate Intel Agent</h2>
+                        <p>Crawling infrastructure stacks, team metrics, and company transformations...</p>
+                    </div>
+                </div>
+                <div class="timeline-step" id="step-council">
+                    <div class="step-indicator">
+                        <div class="step-circle"></div>
+                    </div>
+                    <div class="step-content">
+                        <h4>Consensus Council</h2>
+                        <p>Fanning outputs to Gemini Pro & Flash to vote on structural alignment...</p>
+                    </div>
+                </div>
+                <div class="timeline-step" id="step-judge">
+                    <div class="step-indicator">
+                        <div class="step-circle"></div>
+                    </div>
+                    <div class="step-content">
+                        <h4>Consensus Judge</h2>
+                        <p>Removing speculative claims and compiling Dossier and Evidence Ledger...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dossier Results View -->
+        <section class="dossier-wrapper hidden" id="results-section">
+            <div class="dossier-actions">
+                <button class="btn-secondary" id="btn-reset">← Start New Analysis</button>
+                <div class="action-badges">
+                    <span class="badge border">W&B Weave Traced</span>
+                    <span class="badge fill">Confidence Verified</span>
+                </div>
+            </div>
+
+            <!-- Top Hero Segment -->
+            <div class="panel glass dossier-hero">
+                <div class="hero-left">
+                    <span class="hero-label">Target Overview</span>
+                    <h2 id="dossier-title">Alex Mercer @ Acme Robotics</h2>
+                    <p id="dossier-summary" class="lead-text">Executive summary goes here...</p>
+                </div>
+                <div class="hero-right">
+                    <div class="vibe-card">
+                        <div class="vibe-style">
+                            <span>VIBE PROFILE</span>
+                            <h3 id="dossier-vibe-style">Style</h3>
+                        </div>
+                        <div class="vibe-mirror">
+                            <p id="dossier-vibe-mirror">Mirror strategy...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Insight Grid -->
+            <div class="dossier-grid">
+                <!-- Left: Gaps & Projects -->
+                <div class="grid-col flex-col">
+                    <div class="panel glass expandable flex-grow">
+                        <div class="card-header">
+                            <div class="card-icon red">▲</div>
+                            <h3>Resume Gaps Identified</h3>
+                        </div>
+                        <ul class="gaps-list" id="dossier-gaps">
+                            <!-- Gaps injected dynamically -->
+                        </ul>
+                    </div>
+
+                    <div class="panel glass spotlight">
+                        <div class="card-header">
+                            <div class="card-icon gold">★</div>
+                            <h3>"Trapdoor" Portfolio Project</h3>
+                        </div>
+                        <div class="spotlight-content">
+                            <p class="spotlight-tagline">Build this 2-hour mini-project to close your gaps before the interview:</p>
+                            <p id="dossier-trapdoor" class="spotlight-body">Mini project description...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Common Ground & Interactivity -->
+                <div class="grid-col flex-col">
+                    <div class="panel glass flex-grow">
+                        <div class="card-header">
+                            <div class="card-icon blue">♥</div>
+                            <h3>Common Ground & Hobbies</h3>
+                        </div>
+                        <ul class="common-ground-list" id="dossier-common-ground">
+                            <!-- Injected dynamically -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversational Arsenal Grid -->
+            <div class="grid-2 gap-md">
+                <div class="panel glass">
+                    <div class="card-header">
+                        <div class="card-icon purple">✦</div>
+                        <h3>Hyper-Targeted Icebreakers</h3>
+                    </div>
+                    <ul class="bullets-list" id="dossier-icebreakers">
+                        <!-- Injected dynamically -->
+                    </ul>
+                </div>
+
+                <div class="panel glass">
+                    <div class="card-header">
+                        <div class="card-icon green">◈</div>
+                        <h3>Smart Reverse Questions</h3>
+                    </div>
+                    <ul class="bullets-list" id="dossier-questions">
+                        <!-- Injected dynamically -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Evidence Ledger -->
+            <div class="panel glass ledger-panel">
+                <div class="ledger-header">
+                    <div class="ledger-title-group">
+                        <div class="card-icon neon-green">✓</div>
+                        <h3>Evidence Ledger</h3>
+                    </div>
+                    <span class="ledger-tag">Required Anti-Hallucination Contract</span>
+                </div>
+                <div class="ledger-table-container">
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th>Dossier Claim</th>
+                                <th>Verifiable Source Context</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dossier-ledger-body">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>Built with Gemini 2.5 Pro & Flash + W&B Weave Tracing. Every suggestion is verifiable and consent-filtered.</p>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

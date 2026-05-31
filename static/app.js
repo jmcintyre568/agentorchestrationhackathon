@@ -1,0 +1,246 @@
+/**
+ * RELATABILITY ENGINE - CLIENT-SIDE AGENT ORCHESTRATOR
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('analyzer-form');
+    const inputSection = document.getElementById('input-section');
+    const loadingSection = document.getElementById('loading-section');
+    const resultsSection = document.getElementById('results-section');
+    
+    const btnSubmit = document.getElementById('btn-submit');
+    const btnReset = document.getElementById('btn-reset');
+    
+    // Timeline steps for loader animation
+    const steps = {
+        osint: document.getElementById('step-osint'),
+        corp: document.getElementById('step-corp'),
+        council: document.getElementById('step-council'),
+        judge: document.getElementById('step-judge')
+    };
+
+    let loadingInterval = null;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Gather input values
+        const payload = {
+            recruiter_name: document.getElementById('recruiter_name').value.trim(),
+            company: document.getElementById('company').value.trim(),
+            role: document.getElementById('role').value.trim(),
+            linkedin_url: document.getElementById('linkedin_url').value.trim(),
+            resume_text: document.getElementById('resume_text').value.trim()
+        };
+
+        // Transition: Inputs -> Loading Panel
+        inputSection.classList.add('hidden');
+        loadingSection.classList.remove('hidden');
+        
+        // Start simulated/animated timeline progression for subagents
+        animateLoaderSteps();
+
+        try {
+            // POST request to backend API
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server returned status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // Clean up loader and render dossier results
+            clearInterval(loadingInterval);
+            renderDossier(data, payload.recruiter_name, payload.company);
+            
+            // Transition: Loading -> Results Panel
+            loadingSection.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Analysis failed:', error);
+            clearInterval(loadingInterval);
+            alert(`Swarm failed to compile dossier: ${error.message}. Check that your backend uvicorn server is active!`);
+            
+            // Reset back to inputs
+            loadingSection.classList.add('hidden');
+            inputSection.classList.remove('hidden');
+        }
+    });
+
+    btnReset.addEventListener('click', () => {
+        // Reset form inputs
+        form.reset();
+        
+        // Transition: Results -> Inputs Panel
+        resultsSection.classList.add('hidden');
+        inputSection.classList.remove('hidden');
+        
+        // Reset loader step states
+        Object.values(steps).forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+    });
+
+    /**
+     * Simulates step-by-step progress through the subagent swarm to match real backend delay
+     */
+    function animateLoaderSteps() {
+        // Reset
+        Object.values(steps).forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+
+        // Step 1: OSINT Active
+        steps.osint.classList.add('active');
+
+        let tick = 0;
+        loadingInterval = setInterval(() => {
+            tick++;
+            
+            if (tick === 3) {
+                // OSINT Complete, Corp Intel Active
+                steps.osint.classList.remove('active');
+                steps.osint.classList.add('completed');
+                steps.corp.classList.add('active');
+            } else if (tick === 6) {
+                // Corp Intel Complete, Council Vote Active
+                steps.corp.classList.remove('active');
+                steps.corp.classList.add('completed');
+                steps.council.classList.add('active');
+            } else if (tick === 9) {
+                // Council Complete, Judge Resolution Active
+                steps.council.classList.remove('active');
+                steps.council.classList.add('completed');
+                steps.judge.classList.add('active');
+            }
+        }, 1000);
+    }
+
+    /**
+     * Renders Dossier JSON values dynamically into semantic HTML component structures
+     */
+    function renderDossier(dossier, recruiter, company) {
+        // Hero Content
+        document.getElementById('dossier-title').textContent = `${recruiter} @ ${company}`;
+        document.getElementById('dossier-summary').textContent = dossier.summary || '';
+        
+        // Vibe Card
+        document.getElementById('dossier-vibe-style').textContent = dossier.vibe?.style || 'Standard Professional';
+        document.getElementById('dossier-vibe-mirror').textContent = dossier.vibe?.how_to_mirror || 'Mirror with clear, concise, and executive communications.';
+
+        // Gaps & Fixes
+        const gapsContainer = document.getElementById('dossier-gaps');
+        gapsContainer.innerHTML = '';
+        if (dossier.resume_gaps && dossier.resume_gaps.length > 0) {
+            dossier.resume_gaps.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="gap-title">${escapeHTML(item.gap)}</div>
+                    <div class="gap-fix">${escapeHTML(item.fix)}</div>
+                `;
+                gapsContainer.appendChild(li);
+            });
+        } else {
+            gapsContainer.innerHTML = `<li><div class="gap-title" style="color:var(--accent-green)">No Gaps Detected</div><div class="gap-fix">Your resume is fully aligned!</div></li>`;
+        }
+
+        // Common Ground
+        const cgContainer = document.getElementById('dossier-common-ground');
+        cgContainer.innerHTML = '';
+        if (dossier.common_ground && dossier.common_ground.length > 0) {
+            dossier.common_ground.forEach(item => {
+                const li = document.createElement('li');
+                
+                let sourceLink = '';
+                if (item.source_url && item.source_url.startsWith('http')) {
+                    sourceLink = `<a href="${item.source_url}" target="_blank" class="cg-source-link">Source</a>`;
+                } else if (item.source_url) {
+                    sourceLink = `<span class="cg-source-link" style="border-color:transparent;background:rgba(255,255,255,0.02);color:var(--text-secondary)">${escapeHTML(item.source_url)}</span>`;
+                }
+                
+                li.innerHTML = `
+                    <span class="cg-point">${escapeHTML(item.point)}</span>
+                    ${sourceLink}
+                `;
+                cgContainer.appendChild(li);
+            });
+        } else {
+            cgContainer.innerHTML = `<li><span class="cg-point">Focus on core professional traits and mutual execution focus.</span></li>`;
+        }
+
+        // Icebreakers
+        const icebreakersContainer = document.getElementById('dossier-icebreakers');
+        icebreakersContainer.innerHTML = '';
+        if (dossier.icebreakers && dossier.icebreakers.length > 0) {
+            dossier.icebreakers.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                icebreakersContainer.appendChild(li);
+            });
+        }
+
+        // Smart Questions
+        const questionsContainer = document.getElementById('dossier-questions');
+        questionsContainer.innerHTML = '';
+        if (dossier.smart_questions && dossier.smart_questions.length > 0) {
+            dossier.smart_questions.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                questionsContainer.appendChild(li);
+            });
+        }
+
+        // Trapdoor Spotlight
+        document.getElementById('dossier-trapdoor').textContent = dossier.trapdoor_project || 'Prepare a 2-hour portfolio demonstration showcasing clean API patterns.';
+
+        // Evidence Ledger Body
+        const ledgerBody = document.getElementById('dossier-ledger-body');
+        ledgerBody.innerHTML = '';
+        if (dossier.evidence_ledger && dossier.evidence_ledger.length > 0) {
+            dossier.evidence_ledger.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                let sourceText = 'Public Signals';
+                if (item.source_url && item.source_url.startsWith('http')) {
+                    sourceText = `<a href="${item.source_url}" target="_blank">${escapeHTML(item.source_url)}</a>`;
+                } else if (item.source_url) {
+                    sourceText = escapeHTML(item.source_url);
+                } else {
+                    sourceText = `<span style="color:var(--text-muted)">Public Signals / LinkedIn</span>`;
+                }
+                
+                const confidence = (item.confidence || 'med').toLowerCase();
+                
+                tr.innerHTML = `
+                    <td class="ledger-claim">${escapeHTML(item.claim)}</td>
+                    <td class="ledger-source">${sourceText}</td>
+                    <td><span class="confidence-pill ${confidence}">${confidence}</span></td>
+                `;
+                ledgerBody.appendChild(tr);
+            });
+        } else {
+            ledgerBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">No evidence mapped. fallback mode active.</td></tr>`;
+        }
+    }
+
+    /**
+     * Prevents XSS injection when rendering dynamic content
+     */
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+});

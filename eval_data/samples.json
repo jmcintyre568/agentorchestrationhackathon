@@ -1,0 +1,16 @@
+[
+  {
+    "recruiter_name": "Alex Mercer",
+    "company": "Acme Robotics",
+    "role": "Senior Software Engineer",
+    "linkedin_url": "",
+    "resume_text": "5 years Python/FastAPI, AWS, led a team of 4. Built real-time data pipelines. Open source contributor to asyncio tooling."
+  },
+  {
+    "recruiter_name": "Alex Mercer",
+    "company": "NovaStack",
+    "role": "Staff Engineer",
+    "linkedin_url": "",
+    "resume_text": "10 years full-stack, React/Node, system design. Previously at a fintech startup. Strong in distributed systems and mentoring."
+  }
+]

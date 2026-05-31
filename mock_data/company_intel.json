@@ -1,0 +1,15 @@
+{
+  "company": "Acme Robotics",
+  "infrastructure_stack": ["AWS", "Kubernetes", "Python/FastAPI", "PostgreSQL"],
+  "recent_transformations": [
+    "Migrating monolith to event-driven microservices",
+    "Standardizing on Gemini-powered internal tooling pilots",
+    "Hiring heavily for platform and real-time data roles"
+  ],
+  "engineering_bottlenecks": [
+    "Legacy CI/CD pipeline reliability",
+    "Cross-team API contract drift",
+    "On-call load on the platform team"
+  ],
+  "source": "Mock corporate intel — demo fallback"
+}

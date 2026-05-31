@@ -1,0 +1,8 @@
+{
+    "name": "Alex Mercer",
+    "role": "Senior Engineering Manager",
+    "recent_hires": ["Jane Doe (React/Node)", "John Smith (Python/AWS)"],
+    "hobbies": ["Vintage camera restoration", "Cycling"],
+    "github_activity": "Heavy focus on open-source Next.js boilerplates.",
+    "communication_style": "Direct, values execution over theory. Uses bullet points."
+  }

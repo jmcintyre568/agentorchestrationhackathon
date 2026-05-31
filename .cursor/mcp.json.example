@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "wandb": {
+      "transport": "http",
+      "url": "https://mcp.withwandb.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_WANDB_API_KEY",
+        "Accept": "application/json, text/event-stream"
+      }
+    }
+  }
+}
