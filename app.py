@@ -109,6 +109,26 @@ class AnalysisRequest(BaseModel):
     )
 
 
+class ATSIssue(BaseModel):
+    issue_type: str = Field(description="The category of the ATS trap (e.g., 'Missing Keyword', 'Formatting Trap', 'Weak Impact Metric').")
+    description: str = Field(description="Detailed analysis of where the resume fell short.")
+    fix_suggestion: str = Field(description="The exact rewriting or restructuring required to bypass the filter.")
+
+
+class ATSAnalysisResponse(BaseModel):
+    ats_score: int = Field(description="A strict compliance score from 0 to 100 based on standard enterprise parsing algorithms.")
+    parser_verdict: str = Field(description="Either 'PASS' (Score >= 75) or 'AUTO-REJECT' (Score < 75).")
+    critical_issues: list[ATSIssue] = Field(description="List of issues that would cause an automatic rejection or low ranking.")
+    optimized_summary: str = Field(description="A high-impact, keyword-optimized professional summary tailored for this specific role and company.")
+
+
+class ATSRequest(BaseModel):
+    interviewer_name: str # Kept for pipeline consistency if needed
+    company: str
+    role: str
+    user_resume: str
+
+
 # --- DEMO FALLBACK HELPERS ---
 
 
@@ -390,6 +410,35 @@ def orchestrator_spine(request: AnalysisRequest) -> DossierResponse:
     )
 
 
+@weave.op()
+def live_ats_screener_agent(resume_text: str, target_role: str, target_company: str) -> ATSAnalysisResponse:
+    """Actively parses and grades resume text against industry standard ATS evaluation vectors."""
+    prompt = f"""
+    You are an advanced enterprise Applicant Tracking System parsing engine (e.g., Workday, Taleo, Greenhouse).
+    Analyze the provided candidate resume text for the position of '{target_role}' at '{target_company}'.
+    
+    Evaluate the text across these 4 strict corporate dimensions:
+    1. Keyword Density: Are table-stakes technical keywords present?
+    2. Quantifiable Impact: Do bullet points use the X-Y-Z formula (Accomplished [X], as measured by [Y], by doing [Z])?
+    3. Structural Parseability: Are there complex formatting choices that would corrupt text extraction streams?
+    4. Missing Compliance: Flag any direct misalignment with standard requirements for a {target_role}.
+    
+    Resume Text:
+    {resume_text}
+    """
+    
+    response = generate_content_with_retry(
+        model="gemini-2.5-pro",
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": ATSAnalysisResponse,
+            "temperature": 0.1
+        }
+    )
+    return response.parsed
+
+
 # --- ENDPOINTS ---
 
 
@@ -406,3 +455,9 @@ def analyze_candidate(request: AnalysisRequest) -> DossierResponse:
 @app.post("/analyze", response_model=DossierResponse)
 def analyze_endpoint(request: AnalysisRequest):
     return analyze_candidate(request)
+
+
+@app.post("/ats-check", response_model=ATSAnalysisResponse)
+def check_resume_compliance(request: ATSRequest):
+    """Processes incoming raw text directly through the live Gemini compliance matrix."""
+    return live_ats_screener_agent(request.user_resume, request.role, request.company)
