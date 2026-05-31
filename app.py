@@ -1,5 +1,4 @@
 import os
-import random
 import time
 from pathlib import Path
 from typing import Literal
@@ -445,31 +444,30 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
     )
 
 
-# Ordered model fallback chain — each model has a separate free-tier quota pool.
-# When one model is exhausted, we cascade to the next instead of returning fake data.
+# Fast models only — invalid names in the chain cause slow failed round-trips.
 MODEL_FALLBACK_CHAIN = [
     "gemini-2.5-flash",
-    "gemini-3.5-flash",
-    "gemini-3-flash-preview",
     "gemini-2.5-flash-lite",
     "gemini-2.0-flash",
 ]
 
 
+def _truncate(text: str, max_len: int = 3500) -> str:
+    if len(text) <= max_len:
+        return text
+    return text[:max_len] + "\n...[truncated for token budget]"
+
+
 def generate_content_with_retry(
-    model: str, contents: str, config=None, max_retries: int = 2, rate_limit_delay: float = 1.0
+    model: str, contents: str, config=None, max_retries: int = 1, rate_limit_delay: float = 0.5
 ):
-    """Call Gemini with fail-fast retries and cascading model fallback.
-    
-    When a model's quota is exhausted, cascades through MODEL_FALLBACK_CHAIN
-    to find one with available quota before giving up.
-    """
-    # Build the cascade: start from the requested model, then try everything after it
+    """Fail-fast Gemini call with immediate cascade to the next model on 429."""
     if model in MODEL_FALLBACK_CHAIN:
         idx = MODEL_FALLBACK_CHAIN.index(model)
         cascade = MODEL_FALLBACK_CHAIN[idx:]
     else:
-        cascade = [model] + MODEL_FALLBACK_CHAIN
+        # Non-chain models (e.g. pro): try once, then flash chain only
+        cascade = MODEL_FALLBACK_CHAIN
 
     last_error = None
     for cascade_model in cascade:
@@ -482,24 +480,16 @@ def generate_content_with_retry(
             except (genai_errors.APIError, genai_errors.ClientError, Exception) as e:
                 last_error = e
                 err_str = str(e).lower()
-                is_rate_limit = "429" in err_str or "resource_exhausted" in err_str or "resource exhausted" in err_str
+                is_rate_limit = "429" in err_str or "resource_exhausted" in err_str
                 is_transient = is_rate_limit or "503" in err_str or "unavailable" in err_str
 
                 if is_rate_limit:
-                    # Don't retry the same model on quota exhaustion — skip to next model
-                    print(f"[Gemini Cascade] {cascade_model} quota exhausted (429). Cascading to next model...")
-                    break  # break inner retry loop, try next model in cascade
-                elif is_transient and attempt < max_retries - 1:
-                    sleep_time = 1.0 + random.uniform(0.1, 0.5)
-                    print(f"[Gemini Retry] {cascade_model} transient error. Retrying in {sleep_time:.1f}s...")
-                    time.sleep(sleep_time)
-                elif attempt < max_retries - 1:
-                    sleep_time = rate_limit_delay + random.uniform(0.0, 0.5)
-                    print(f"[Gemini Retry] {cascade_model} error. Retrying in {sleep_time:.1f}s...")
-                    time.sleep(sleep_time)
+                    print(f"[Gemini Cascade] {cascade_model} quota hit — next model immediately")
+                    break
+
+                if is_transient and attempt < max_retries - 1:
+                    time.sleep(rate_limit_delay)
                 else:
-                    # Non-retryable or exhausted retries — cascade to next model
-                    print(f"[Gemini Cascade] {cascade_model} failed after {max_retries} attempts. Cascading...")
                     break
 
     raise last_error if last_error else RuntimeError("Gemini content generation failed — all models exhausted")
@@ -575,82 +565,53 @@ def council_vote(
     company: str,
     role: str,
 ) -> DossierResponse:
-    """Pro (depth) + Flash (speed) proposals, then Pro judge merges into structured dossier."""
+    """Single-shot structured synthesis — one Gemini call instead of proposer+judge cascade."""
 
-    base_instruction = f"""
+    osint = _truncate(osint)
+    corp = _truncate(corp)
+    resume = _truncate(resume)
+
+    prompt = f"""
     You are an elite talent strategist building an interview dossier called "Hack Your Future".
     Ground everything strictly in professional facts from the inputs below.
     Do not surface overly personal details.
 
     Interviewer Name (Recruiter/Manager): {recruiter_name}
     Interviewer Company: {company}
-    Candidate's Target Application Role: {role} (Note: This is NOT the interviewer's role. This is the job the candidate is applying for. Do NOT copy this target role as the interviewer's current title/role!)
+    Candidate's Target Application Role: {role} (NOT the interviewer's role — do not copy this as the interviewer's title)
     OSINT Profile / Footprint: {osint}
     Company Strategy: {corp}
     Candidate Resume: {resume}
 
-    Ensure you populate the response schemas with extreme detail:
-    - name: The scanned name of the interviewer.
-    - email: A professional email address for the interviewer.
-    - role: The interviewer's actual current title/role at the company. This MUST NOT be the candidate's target application role ("{role}").
-            If the OSINT Profile indicates they are in recruitment, talent acquisition, human resources, sourcing, or people ops,
-            their role MUST be "Technical Recruiter", "Recruiter", "Talent Partner", or a recruitment-focused title.
-            Never copy the candidate's target engineering/technical role ("{role}") into this field unless the OSINT Profile explicitly proves the interviewer currently holds that exact role.
-    - company: The interviewer's current company.
-    - bio: A highly detailed professional bio (3-4 sentences) summarizing their career, focus, public footprint, and explicitly including the city they are based in (e.g. '...based in Seattle, WA...').
-    - linkedin_picture_url: A public professional photo URL if available, otherwise a high-quality professional Unsplash placeholder like 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop'.
-    - ats_red_flags: Provide at least 3 critical compliance/parsing red flags with exact, actionable fix suggestions and severity ("critical" or "high"). DO NOT leave this empty.
-    - recommended_improvements: Provide at least 3 high-impact structural improvement recommendations with concrete 2-hour action plans. DO NOT leave this empty.
-    - upcoming_events: List 2-3 upcoming summits, tech conferences, or local industry events the interviewer is highly likely to attend based on their footprint.
-    - cold_icebreakers: Provide 3 cold networking conversation starters for physical summits. Make 1-2 based on their personal hobbies/interests (e.g., running, photography) to get them talking, and 1-2 based on their work milestones (recent launch or open source repository).
-    - common_ground: At least 3 detailed shared-interest or alignment points.
-    - icebreakers: Exactly 3 specific professional starters.
-    - smart_questions: Exactly 2 high-impact reverse-engineering questions.
+    Populate every schema field with detail:
+    - name, email, role (interviewer's actual title from OSINT — recruiter titles if they are in TA/HR),
+      company, bio (3-4 sentences, include city), linkedin_picture_url (real URL or Unsplash placeholder)
+    - ats_red_flags: at least 3 with severity critical/high and actionable fixes
+    - recommended_improvements: at least 3 with 2-hour action plans
+    - upcoming_events: 2-3 likely conferences/summits
+    - cold_icebreakers: 3 (mix hobbies + work milestones)
+    - common_ground: at least 3 points
+    - icebreakers: exactly 3
+    - smart_questions: exactly 2
 
     {EVIDENCE_LEDGER_RULES}
-    """
-
-    proposal_a = generate_content_with_retry(
-        "gemini-2.5-flash",
-        base_instruction
-        + "\nFocus on deep structural alignment, resume gaps with fixes, and evidence mapping.",
-    ).text
-
-    proposal_b = generate_content_with_retry(
-        "gemini-2.5-flash",
-        base_instruction
-        + "\nFocus on actionable icebreakers, smart questions, and common ground.",
-    ).text
-
-    judge_prompt = f"""
-    You are the final judge merging two analyst proposals into one definitive dossier.
-    Prefer facts present in both proposals. Drop speculative or intrusive content.
-    Ensure evidence_ledger covers every major claim with source attribution.
-
-    Proposal A (Pro — analytical depth):
-    {proposal_a}
-
-    Proposal B (Flash — actionable speed):
-    {proposal_b}
 
     Return JSON matching the required schema exactly.
     """
 
-    judge_config = {
-        "response_mime_type": "application/json",
-        "response_schema": DossierResponse,
-        "temperature": 0.2,
-    }
-    # Single call — cascade handles model fallback automatically
     final_output = generate_content_with_retry(
         model="gemini-2.5-flash",
-        contents=judge_prompt,
-        config=judge_config,
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json",
+            "response_schema": DossierResponse,
+            "temperature": 0.2,
+        },
     )
     if final_output.parsed is not None:
         return final_output.parsed
 
-    raise RuntimeError("Judge model returned unparseable dossier")
+    raise RuntimeError("Council synthesis returned unparseable dossier")
 
 
 @weave.op()
@@ -698,13 +659,13 @@ def live_ats_screener_agent(resume_text: str, target_role: str, target_company: 
     """
     
     response = generate_content_with_retry(
-        model="gemini-2.5-pro",
+        model="gemini-2.5-flash",
         contents=prompt,
         config={
             "response_mime_type": "application/json",
             "response_schema": ATSAnalysisResponse,
-            "temperature": 0.1
-        }
+            "temperature": 0.1,
+        },
     )
     return response.parsed
 
