@@ -1,5 +1,5 @@
 /**
- * RELATABILITY ENGINE - CLIENT-SIDE AGENT ORCHESTRATOR
+ * HACK YOUR FUTURE - CLIENT-SIDE AGENT ORCHESTRATOR
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -133,28 +133,65 @@ document.addEventListener('DOMContentLoaded', () => {
      * Renders Dossier JSON values dynamically into semantic HTML component structures
      */
     function renderDossier(dossier, recruiter, company) {
-        // Hero Content
-        document.getElementById('dossier-title').textContent = `${recruiter} @ ${company}`;
-        document.getElementById('dossier-summary').textContent = dossier.summary || '';
-        
-        // Vibe Card
-        document.getElementById('dossier-vibe-style').textContent = dossier.vibe?.style || 'Standard Professional';
-        document.getElementById('dossier-vibe-mirror').textContent = dossier.vibe?.how_to_mirror || 'Mirror with clear, concise, and executive communications.';
+        // Scanned Digital Footprint Content
+        document.getElementById('dossier-name').textContent = dossier.name || recruiter;
+        document.getElementById('dossier-email').textContent = dossier.email || `${recruiter.toLowerCase().replace(' ', '.')}@${company.toLowerCase().replace(' ', '')}.com`;
+        document.getElementById('dossier-bio').textContent = dossier.bio || '';
+        document.getElementById('dossier-role').textContent = dossier.role || 'Senior Lead';
+        document.getElementById('dossier-company').textContent = dossier.company || company;
 
-        // Gaps & Fixes
-        const gapsContainer = document.getElementById('dossier-gaps');
-        gapsContainer.innerHTML = '';
-        if (dossier.resume_gaps && dossier.resume_gaps.length > 0) {
-            dossier.resume_gaps.forEach(item => {
+        // Render LinkedIn picture if available
+        const avatarContainer = document.getElementById('dossier-avatar-container');
+        const avatarSvg = document.getElementById('dossier-avatar-svg');
+        const existingImg = avatarContainer.querySelector('img');
+        if (existingImg) {
+            existingImg.remove();
+        }
+        if (dossier.linkedin_picture_url) {
+            avatarSvg.style.display = 'none';
+            const img = document.createElement('img');
+            img.src = dossier.linkedin_picture_url;
+            img.alt = dossier.name || recruiter;
+            avatarContainer.appendChild(img);
+        } else {
+            avatarSvg.style.display = 'block';
+        }
+
+        // ATS Red Flags (Critical Gaps)
+        const redFlagsContainer = document.getElementById('dossier-red-flags');
+        redFlagsContainer.innerHTML = '';
+        if (dossier.ats_red_flags && dossier.ats_red_flags.length > 0) {
+            dossier.ats_red_flags.forEach(item => {
                 const li = document.createElement('li');
+                const severity = (item.severity || 'high').toLowerCase();
                 li.innerHTML = `
-                    <div class="gap-title">${escapeHTML(item.gap)}</div>
+                    <div class="gap-title">
+                        <span>${escapeHTML(item.flag)}</span>
+                        <span class="gap-severity ${severity}">${severity}</span>
+                    </div>
                     <div class="gap-fix">${escapeHTML(item.fix)}</div>
                 `;
-                gapsContainer.appendChild(li);
+                redFlagsContainer.appendChild(li);
             });
         } else {
-            gapsContainer.innerHTML = `<li><div class="gap-title" style="color:var(--accent-green)">No Gaps Detected</div><div class="gap-fix">Your resume is fully aligned!</div></li>`;
+            redFlagsContainer.innerHTML = `<li><div class="gap-title" style="color:var(--accent-green)">No Compliance Red Flags Detected</div><div class="gap-fix">Your resume successfully bypasses standard automated filtration.</div></li>`;
+        }
+
+        // Recommended Structural Improvements
+        const improvementsContainer = document.getElementById('dossier-improvements');
+        improvementsContainer.innerHTML = '';
+        if (dossier.recommended_improvements && dossier.recommended_improvements.length > 0) {
+            dossier.recommended_improvements.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="imp-qualification">${escapeHTML(item.missing_qualification)}</div>
+                    <div class="imp-impact">${escapeHTML(item.impact)}</div>
+                    <div class="imp-implementation"><strong>Action Plan:</strong> ${escapeHTML(item.implementation)}</div>
+                `;
+                improvementsContainer.appendChild(li);
+            });
+        } else {
+            improvementsContainer.innerHTML = `<li><div class="imp-qualification">Resume Fully Optimized</div><div class="imp-impact">No missing keyword layers or credential gaps identified.</div></li>`;
         }
 
         // Common Ground
@@ -178,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cgContainer.appendChild(li);
             });
         } else {
-            cgContainer.innerHTML = `<li><span class="cg-point">Focus on core professional traits and mutual execution focus.</span></li>`;
+            cgContainer.innerHTML = `<li><span class="cg-point">Focus on core professional traits and mutual business goals.</span></li>`;
         }
 
         // Icebreakers
@@ -202,9 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 questionsContainer.appendChild(li);
             });
         }
-
-        // Trapdoor Spotlight
-        document.getElementById('dossier-trapdoor').textContent = dossier.trapdoor_project || 'Prepare a 2-hour portfolio demonstration showcasing clean API patterns.';
 
         // Evidence Ledger Body
         const ledgerBody = document.getElementById('dossier-ledger-body');
@@ -232,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ledgerBody.appendChild(tr);
             });
         } else {
-            ledgerBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">No evidence mapped. fallback mode active.</td></tr>`;
+            ledgerBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">No evidence mapped.</td></tr>`;
         }
     }
 

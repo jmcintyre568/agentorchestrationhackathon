@@ -25,24 +25,22 @@ class DossierCompletenessScorer(weave.Scorer):
     @weave.op
     def score(self, output: DossierResponse, **kwargs) -> dict:
         missing: list[str] = []
-        if not output.summary.strip():
-            missing.append("summary")
+        if not output.bio.strip():
+            missing.append("bio")
         if len(output.common_ground) < 1:
             missing.append("common_ground")
         if len(output.icebreakers) < 3:
             missing.append("icebreakers (need >= 3)")
         if len(output.smart_questions) < 2:
             missing.append("smart_questions (need >= 2)")
-        if not output.vibe.style.strip() or not output.vibe.how_to_mirror.strip():
-            missing.append("vibe")
-        if len(output.resume_gaps) < 1:
-            missing.append("resume_gaps")
-        if not output.trapdoor_project.strip():
-            missing.append("trapdoor_project")
+        if len(output.ats_red_flags) < 1:
+            missing.append("ats_red_flags")
+        if len(output.recommended_improvements) < 1:
+            missing.append("recommended_improvements")
         if len(output.evidence_ledger) < 5:
             missing.append("evidence_ledger (need >= 5)")
 
-        total_checks = 8
+        total_checks = 7
         passed = total_checks - len(missing)
         return {"score": passed / total_checks, "missing_fields": missing}
 

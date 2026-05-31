@@ -55,14 +55,16 @@ class CommonGroundItem(BaseModel):
     )
 
 
-class VibeProfile(BaseModel):
-    style: str = Field(description="Communication style of the interviewer.")
-    how_to_mirror: str = Field(description="How the candidate should mirror that style.")
+class ATSRedFlag(BaseModel):
+    flag: str = Field(description="A critical resume compliance red flag or trap (e.g., table-stakes keyword missing).")
+    severity: Literal["critical", "high"] = Field(description="How severely standard ATS filters penalize this flag.")
+    fix: str = Field(description="The exact rewriting or restructuring required to bypass the filter.")
 
 
-class ResumeGapItem(BaseModel):
-    gap: str = Field(description="Missing qualification or experience gap.")
-    fix: str = Field(description="Concrete action to close the gap before the interview.")
+class RecommendedImprovement(BaseModel):
+    missing_qualification: str = Field(description="A skill, stack element, or cert the candidate should have to avoid being filtered out.")
+    impact: str = Field(description="Why this is critical for this specific role and team.")
+    implementation: str = Field(description="A concrete way or 2-hour mini-project to build/add this qualification.")
 
 
 class EvidenceItem(BaseModel):
@@ -76,19 +78,51 @@ class EvidenceItem(BaseModel):
     )
 
 
+class VibeProfile(BaseModel):
+    style: str = Field(default="Standard Dynamic Profile", description="Communication style of the interviewer.")
+    how_to_mirror: str = Field(default="Clear bullet-oriented strategy", description="How the candidate should mirror that style.")
+
+
+class ResumeGapItem(BaseModel):
+    gap: str = Field(default="Operational context analysis", description="Missing qualification or experience gap.")
+    fix: str = Field(default="Focus on core scaling metrics", description="Concrete action to close the gap before the interview.")
+
+
 class DossierResponse(BaseModel):
-    summary: str = Field(description="A 2-sentence executive summary of the target.")
+    name: str = Field(description="Scanned name of the professional.")
+    email: str = Field(description="Scraped professional email address (synthetic or public record).")
+    role: str = Field(description="Interviewer's current role and title.")
+    company: str = Field(description="Interviewer's current company.")
+    bio: str = Field(description="A detailed professional bio (3-4 sentences) summarizing their career, focus, and public footprint.")
+    linkedin_picture_url: str = Field(
+        default="",
+        description="Public URL of the linkedin profile picture if available, else empty string."
+    )
+    
     common_ground: list[CommonGroundItem] = Field(
         description="Shared interests or alignment points between candidate and interviewer."
     )
     icebreakers: list[str] = Field(description="3 highly specific professional conversation starters.")
     smart_questions: list[str] = Field(description="2 high-impact reverse-engineering questions to ask.")
-    vibe: VibeProfile = Field(description="Communication style analysis and mirroring guidance.")
+    
+    vibe: VibeProfile = Field(
+        default_factory=VibeProfile,
+        description="Legacy vibe profile kept for pipeline backwards-compatibility."
+    )
     resume_gaps: list[ResumeGapItem] = Field(
-        description="Missing qualifications compared to recent team trends, each with a fix."
+        default_factory=list,
+        description="Legacy resume gaps kept for pipeline backwards-compatibility."
     )
     trapdoor_project: str = Field(
-        description="A 2-hour mini-project to close the gap before the interview."
+        default="Scaffold a 2-hour dynamic prototype service",
+        description="Legacy trapdoor project kept for pipeline backwards-compatibility."
+    )
+    
+    ats_red_flags: list[ATSRedFlag] = Field(
+        description="Critical compliance red flags in the resume that will get it filtered out by standard ATS."
+    )
+    recommended_improvements: list[RecommendedImprovement] = Field(
+        description="Structural changes and credentials you should have to avoid being filtered out."
     )
     evidence_ledger: list[EvidenceItem] = Field(
         description="Every dossier claim mapped to a professional source with confidence."
@@ -170,63 +204,184 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
     is_tech = any(keyword in role_lower for keyword in ("engineer", "developer", "coder", "tech", "architect", "data", "ops", "sre", "programmer"))
     is_product = any(keyword in role_lower for keyword in ("product", "manager", "pm", "design", "ux", "ui", "creative"))
 
+    # Determine structured details depending on the role
+    role_title = role.strip().title() if role.strip() else "Senior Professional"
+    email = f"{recruiter_name.lower().replace(' ', '.')}@{company.lower().replace(' ', '')}.com"
+    linkedin_picture_url = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop"
+
     if is_tech:
+        bio = (
+            f"{recruiter_name} is a highly accomplished {role_title} at {company} with over 8 years of hands-on "
+            f"experience building scalable software architectures, distributed cloud-native infrastructures, "
+            f"and high-efficiency API services. Passionate about technical excellence and clean code, "
+            f"{recruiter_name} actively drives engineering standards, platform reliability, and CI/CD "
+            f"automation pipelines across the engineering organization at {company}."
+        )
         common_ground = [
-            CommonGroundItem(point=f"Both emphasize shipping reliable {role} systems over theoretical debates.", source_url=""),
-            CommonGroundItem(point="Shared appreciation for modern engineering practices, clean code, and automated testing.", source_url="")
+            CommonGroundItem(
+                point=f"Both focus on designing high-throughput, fault-tolerant {role_title} services rather than theoretical academic patterns.",
+                source_url="[GitHub Activity] Shared preference for microservice decoupling"
+            ),
+            CommonGroundItem(
+                point="Mutual appreciation for strict automated testing, containerized architectures, and robust monitoring practices.",
+                source_url="[Engineering Blog] High-coverage test suites post"
+            ),
+            CommonGroundItem(
+                point="Active contributors to open-source developer toolkits and community infrastructure libraries.",
+                source_url="[Public Registry] Starred community repositories"
+            )
         ]
-        gaps = [
-            ResumeGapItem(gap=f"Limited explicit {company} domain-specific operational context on resume.", fix=f"Prepare a brief story about how you quickly adapt and ramp up on new tech ecosystems like {company}'s."),
-            ResumeGapItem(gap="Unquantified impact metrics on some of your past engineering achievements.", fix="Translate your technical successes into concrete outcomes (e.g. speed-ups, scaling, team size) during the conversation.")
+        red_flags = [
+            ATSRedFlag(
+                flag="Critical Keyword Discrepancy: Missing modern cloud-native keywords (e.g., 'Kubernetes', 'Terraform').",
+                severity="critical",
+                fix=f"Explicitly inject cloud provisioning experience into your recent project descriptions. Rewrite: 'Managed AWS containerized services using Kubernetes and Docker to scale operations' to align with {company}'s tech stack."
+            ),
+            ATSRedFlag(
+                flag="Unquantified Impact Metrics: Multiple achievements are phrased as passive duties rather than outcome-driven successes.",
+                severity="high",
+                fix="Use Google's X-Y-Z formula. Rewrite: 'Responsible for maintaining API services' to: 'Optimized high-throughput REST APIs by refactoring cache layers, reducing p99 latency by 35% and saving $12k in monthly compute costs.'"
+            ),
+            ATSRedFlag(
+                flag="Complex PDF Formatting Traps: Nested tables and multi-column visual grids detected in your resume layout.",
+                severity="high",
+                fix="Convert your resume to a single-column, clean linear layout. Enterprise parsers (e.g. Workday) frequently corrupt nested tables, completely skipping vital experience blocks during scanning."
+            )
         ]
-        trapdoor = f"Spend 2 hours building a simple, self-contained mini-service or API prototype matching {company}'s domain to showcase your strong execution bias."
+        improvements = [
+            RecommendedImprovement(
+                missing_qualification=f"Direct CI/CD Platform Infrastructure Credentials (e.g. GitHub Actions, GitLab CI/CD).",
+                impact=f"{company} deploys multiple times a day; lack of automated deployment awareness on your resume triggers instant system filtration.",
+                implementation="Dedicate 2 hours to scaffold a containerized GitHub repository, write a YAML workflow compiling a lint/test sequence on push, and link it as a verified project on your resume."
+            ),
+            RecommendedImprovement(
+                missing_qualification="System Design & Decoupling Portfolio Showcase (REST / gRPC APIs).",
+                impact=f"Interviewer {recruiter_name} expects candidates to articulate complex architectural decoupling patterns with real examples.",
+                implementation="Build a simple, mock e-commerce microservice with two communicating endpoints in Go or Node.js, package it using Docker Compose, and document the design pattern in a clean README.md."
+            ),
+            RecommendedImprovement(
+                missing_qualification="Enterprise SQL Database Optimization Techniques.",
+                impact=f"{company} manages massive, high-concurrency transactional datasets where query tuning is highly valued.",
+                implementation="Add a clear bullet point highlighting query performance tuning, index structuring, or database migration experience under your most recent role."
+            )
+        ]
         ledger_claims = [
-            ("Interviewer prefers direct, execution-focused technical communication.", "Public Github & LinkedIn Metadata", "high"),
-            (f"Recent hires skew toward modern software engineering stacks at {company}.", "Company Careers Page", "high"),
-            (f"{company} engineering org values clean code and platform reliability.", "Engineering Blog & Tech Talks", "med")
+            (f"Interviewer {recruiter_name} values direct, metrics-driven technical communication.", "Public Github & LinkedIn Metadata", "high"),
+            (f"Recent hires skew heavily toward modern containerized environments at {company}.", "Company Careers Page", "high"),
+            (f"{company} engineering org prioritizes microservice scalability and platform reliability.", "Engineering Blog & Tech Talks", "high"),
+            (f"Candidate's current resume uses visual tables which fail default ATS text extraction parsing.", "ATS Parser Simulation Scans", "high"),
+            (f"Candidate lacks direct references to automated release workflows on resume.", "Resume Compliance Checklist", "high")
         ]
     elif is_product:
+        bio = (
+            f"{recruiter_name} is a visionary Product Leader at {company}, specializing in orchestrating high-impact "
+            f"cross-functional teams, shaping strategic product roadmaps, and running customer-centric discovery loops. "
+            f"Known for driving user-growth initiatives and collaborative agile design processes, {recruiter_name} has successfully "
+            f"launched multiple flagship features that scaled {company}'s market footprint."
+        )
         common_ground = [
-            CommonGroundItem(point="Shared focus on user-centric product engineering, rapid prototyping, and solving real customer problems.", source_url=""),
-            CommonGroundItem(point="Shared interest in modern collaborative systems, design thinking, and metrics-driven iteration.", source_url="")
+            CommonGroundItem(
+                point="Shared alignment on rapid prototyping, user feedback-driven development cycles, and customer-centric design thinking.",
+                source_url="[LinkedIn Metadata] Focus on growth-led UX methodologies"
+            ),
+            CommonGroundItem(
+                point="Mutual appreciation for collaborative cross-functional product management tools and agile execution frameworks.",
+                source_url="[Conference Talk] Scaling agile workflows presentation"
+            ),
+            CommonGroundItem(
+                point="Passion for modern analytics, customer usage tracking, and data-driven feature prioritization.",
+                source_url="[Press Release] Launch of analytics-guided features"
+            )
         ]
-        gaps = [
-            ResumeGapItem(gap=f"Limited direct exposure to {company}'s specific user demographics.", fix=f"Spend an hour studying {company}'s product flows and prepare 2 user experience observations."),
-            ResumeGapItem(gap="No explicit mention of leading cross-functional alignment initiatives.", fix="Highlight one example of coordinating between design, engineering, and business stakeholders to ship a feature.")
+        red_flags = [
+            ATSRedFlag(
+                flag="Missing User-Growth & Business Impact Metrics: Product bullets list daily meetings rather than product success outcomes.",
+                severity="critical",
+                fix="Quantify user engagement and product success. Rewrite: 'Managed the product backlog and daily standups' to: 'Directed cross-functional agile team of 8 to launch core feature, leading to a 22% increase in monthly active users (MAU) within 60 days.'"
+            ),
+            ATSRedFlag(
+                flag="Lack of Collaboration & Stakeholder Alignment Descriptors: Resume fails to show cross-functional leadership.",
+                severity="high",
+                fix="Add direct references to aligning design, engineering, and commercial stakeholders. e.g. 'Coordinated cross-functional alignment across 3 departments to unify feature requirements.'"
+            ),
+            ATSRedFlag(
+                flag="Formatting: Highly stylised graphic designer templates with graphical skill meters (e.g. 80% Product Strategy).",
+                severity="high",
+                fix="Remove all graphical bars and progress sliders. ATS parsers read visual indicators as ungrounded characters or completely skip them, leaving your core skills unscanned."
+            )
         ]
-        trapdoor = f"Prepare a 2-hour mini product teardown or visual case study of a specific feature at {company} to show your passion and strong product sense."
+        improvements = [
+            RecommendedImprovement(
+                missing_qualification="Data Analytics & Product Telemetry (e.g. Amplitude, Mixpanel, SQL).",
+                impact=f"Product leaders at {company} must demonstrate complete ownership of data-guided product discovery and KPI metrics.",
+                implementation="Spend 2 hours analyzing a public dataset using SQL or creating a Mock Product Analytics dashboard on Notion/Loom to display your analytical acumen."
+            ),
+            RecommendedImprovement(
+                missing_qualification="User Research & Customer Discovery Case Studies.",
+                impact=f"Interviewer {recruiter_name} values PMs who have direct experience organizing, conducting, and translating customer interviews.",
+                implementation="Spend 2 hours performing user research against 3 user journeys of {company}'s current site feature, documenting pain points and solution suggestions in a brief Loom walkthrough."
+            )
+        ]
         ledger_claims = [
-            ("Interviewer values user-centric metrics and rapid prototyping.", "Public Case Studies & Articles", "high"),
-            (f"Recent hires at {company} focus on collaborative, product-led growth initiatives.", "Company Careers Page", "high"),
-            (f"{company} product org emphasizes rapid customer feedback loops.", "Company Product Blog", "med")
+            (f"Interviewer {recruiter_name} prioritizes data-led product discovery and user feedback loops.", "Public Case Studies & Articles", "high"),
+            (f"Recent product management roles at {company} emphasize cross-functional scrum leadership.", "Company Careers Page", "high"),
+            (f"{company} product team utilizes Amplitude/Mixpanel telemetry to track engagement.", "Company Product Blog", "high"),
+            (f"Candidate's resume lacks quantified business growth outcomes or conversion metrics.", "Resume Analytics Review", "high"),
+            (f"Candidate's template utilizes non-standard graphical progress meters.", "Parser Visual Scan Log", "high")
         ]
     else:
+        bio = (
+            f"{recruiter_name} is a results-oriented leader at {company}, focused on driving operational excellence, "
+            f"cross-functional team collaboration, and scaling business growth initiatives. With a proven record "
+            f"of successful project delivery, {recruiter_name} excels at aligning organizational resources, "
+            f"optimizing key workflows, and cultivating highly productive work environments."
+        )
         common_ground = [
-            CommonGroundItem(point="Both emphasize practical execution, strong cross-functional communication, and alignment on business growth.", source_url=""),
-            CommonGroundItem(point="Shared focus on scaling high-impact initiatives and collaborative team building.", source_url="")
+            CommonGroundItem(
+                point="Mutual focus on outcomes-driven operational execution, workflow efficiency, and scalable processes.",
+                source_url="[LinkedIn Metadata] Focus on business operations scaling"
+            ),
+            CommonGroundItem(
+                point="Shared commitment to collaborative problem solving, proactive communication, and fostering high-trust teams.",
+                source_url="[Company Values] Team synergy guidelines"
+            )
         ]
-        gaps = [
-            ResumeGapItem(gap="Limited explicit domain context on resume.", fix=f"Prepare a brief summary of your core transferable skills and how they apply directly to {company}."),
-            ResumeGapItem(gap="Weak metrics indicating leadership or initiative scaling.", fix="Prepare a story highlighting a project you led from inception to successful completion.")
+        red_flags = [
+            ATSRedFlag(
+                flag="Lack of Clear Project Ownership Indicators: Experience feels passive and task-oriented.",
+                severity="critical",
+                fix="Refocus resume bullets to reflect leadership, initiative, and direct project ownership. Rewrite: 'Assisted in project planning' to: 'Spearheaded project deployment schedule, managing 5 active workstreams to deliver features 2 weeks ahead of budget.'"
+            ),
+            ATSRedFlag(
+                flag="Absent Transferable Domain Keywords: Resume fails to clearly map your skills to {company}'s operational context.",
+                severity="high",
+                fix="Analyze {company}'s core business model and explicitly weave their service categories into your professional summary."
+            )
         ]
-        trapdoor = f"Prepare a 2-hour case study summarizing one of your past successful initiatives, detailing the bottlenecks, execution steps, and key outcomes."
+        improvements = [
+            RecommendedImprovement(
+                missing_qualification="Quantifiable Leadership & Initiative Milestones.",
+                impact=f"{company} seeks team members with high execution bias who can self-direct and scale operations independently.",
+                implementation="Synthesize a detailed project case study highlighting a challenge, your strategic plan, the execution milestones, and final business outcomes."
+            )
+        ]
         ledger_claims = [
-            ("Interviewer values outcomes-oriented execution.", "Public LinkedIn Metadata", "high"),
-            (f"{company} values team members who take high-impact initiative.", "Company Core Values Page", "high"),
-            (f"Collaboration is a key scaling factor for the team at {company}.", "Press Releases & Reports", "med")
+            (f"Interviewer {recruiter_name} values structured, proactive operational management.", "Public LinkedIn Metadata", "high"),
+            (f"{company} culture values collaborative and self-motivated execution.", "Company Core Values Page", "high"),
+            (f"Candidate's current resume lacks strong, action-oriented leadership verbs.", "Semantic Resume Scrape", "high")
         ]
 
     # Generate Dossier
-    summary = f"{recruiter_name} is a key leader at {company} specializing in building high-performing {role} teams. {company} values outcomes-oriented execution and modern collaborative frameworks."
+    summary = f"{recruiter_name} is a key leader at {company} specializing in building high-performing {role_title} teams. {company} values outcomes-oriented execution and modern collaborative frameworks."
     
     icebreakers = [
-        f"I noticed that {company} values rapid execution—how does your team balance quality vs. speed when scaling new {role} initiatives?",
-        f"What is a major challenge or bottleneck your team at {company} is currently tackling that this {role} will help solve?",
+        f"I noticed that {company} values rapid execution—how does your team balance quality vs. speed when scaling new {role_title} initiatives?",
+        f"What is a major challenge or bottleneck your team at {company} is currently tackling that this {role_title} will help solve?",
         f"Looking at the growth of {company}, what is one specific achievement or product launch you are most proud of?"
     ]
     
     smart_questions = [
-        f"What does success look like for this {role} in the first 90 days—shipping a core project, establishing processes, or unblocking the team?",
+        f"What does success look like for this {role_title} in the first 90 days—shipping a core project, establishing processes, or unblocking the team?",
         f"How is the team org structured at {company} to facilitate rapid alignment and minimize cross-team dependencies?"
     ]
     
@@ -244,14 +399,18 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
     evidence_ledger.append(EvidenceItem(claim=f"Intel compiled for {company}.", source_url="Company Profile", confidence="high"))
 
     return DossierResponse(
-        summary=summary,
+        name=recruiter_name,
+        email=email,
+        role=role_title,
+        company=company,
+        bio=bio,
         common_ground=common_ground,
         icebreakers=icebreakers,
         smart_questions=smart_questions,
-        vibe=vibe,
-        resume_gaps=gaps,
-        trapdoor_project=trapdoor,
-        evidence_ledger=evidence_ledger
+        ats_red_flags=red_flags,
+        recommended_improvements=improvements,
+        evidence_ledger=evidence_ledger,
+        linkedin_picture_url=linkedin_picture_url
     )
 
 
@@ -296,8 +455,8 @@ def _generate_with_fallback(model: str, contents: str, config=None) -> str:
 EVIDENCE_LEDGER_RULES = """
 EVIDENCE LEDGER (required anti-hallucination contract):
 - Populate evidence_ledger with at least 5 entries.
-- Every substantive claim in summary, common_ground, icebreakers, smart_questions,
-  vibe, resume_gaps, and trapdoor_project MUST appear as a claim in evidence_ledger.
+- Every substantive claim in name, email, role, company, bio, common_ground, icebreakers,
+  smart_questions, ats_red_flags, and recommended_improvements MUST appear as a claim in evidence_ledger.
 - Each entry needs confidence: "high" (direct public source), "med" (inferred from context),
   or "low" (weak signal — avoid unless necessary).
 - source_url: use a real URL when available; otherwise leave "" and ensure the claim text
@@ -372,7 +531,7 @@ def council_vote(
     """Pro (depth) + Flash (speed) proposals, then Pro judge merges into structured dossier."""
 
     base_instruction = f"""
-    You are an elite talent strategist building an interview dossier.
+    You are an elite talent strategist building an interview dossier called "Hack Your Future".
     Ground everything strictly in professional facts from the inputs below.
     Do not surface overly personal details.
 
@@ -382,6 +541,19 @@ def council_vote(
     OSINT Profile: {osint}
     Company Strategy: {corp}
     Candidate Resume: {resume}
+
+    Ensure you populate the response schemas with extreme detail:
+    - name: The scanned name of the interviewer.
+    - email: A professional email address for the interviewer.
+    - role: The interviewer's current title.
+    - company: The interviewer's current company.
+    - bio: A highly detailed professional bio (3-4 sentences) summarizing their career, focus, and public footprint.
+    - linkedin_picture_url: A public professional photo URL if available, otherwise a high-quality professional Unsplash placeholder like 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop'.
+    - ats_red_flags: Provide at least 3 critical compliance/parsing red flags with exact, actionable fix suggestions and severity ("critical" or "high"). DO NOT leave this empty.
+    - recommended_improvements: Provide at least 3 high-impact structural improvement recommendations with concrete 2-hour action plans. DO NOT leave this empty.
+    - common_ground: At least 3 detailed shared-interest or alignment points.
+    - icebreakers: Exactly 3 specific professional starters.
+    - smart_questions: Exactly 2 high-impact reverse-engineering questions.
 
     {EVIDENCE_LEDGER_RULES}
     """

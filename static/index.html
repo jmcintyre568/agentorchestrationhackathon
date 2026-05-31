@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatability Engine — High-Fidelity OSINT Dossier</title>
+    <title>Hack Your Future — AI Agent Swarm & ATS Firewall</title>
     <!-- Google Fonts: Inter for UI, Outfit for Headers -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
     <header class="app-header">
         <div class="logo-container">
             <div class="logo-orb"></div>
-            <h1>RELATABILITY<span>ENGINE</span></h1>
+            <h1>HACK YOUR<span>FUTURE</span></h1>
         </div>
         <div class="header-badge">
             <span class="status-dot green"></span>
@@ -29,8 +29,8 @@
         <!-- Input Panel -->
         <section class="panel glass input-panel" id="input-section">
             <div class="panel-header">
-                <h2>Generate OSINT Dossier</h2>
-                <p>Socially engineer your next interview by analyzing your recruiter's public digital footprint.</p>
+                <h2>Analyze Interview & Resume</h2>
+                <p>Socially engineer your next interview and bypass corporate filters using a dual-agent compliance swarm.</p>
             </div>
             
             <form id="analyzer-form">
@@ -62,7 +62,7 @@
                 </div>
                 
                 <button type="submit" class="btn-submit" id="btn-submit">
-                    <span>Synthesize Dossier</span>
+                    <span>Scan Footprint & Resume</span>
                     <div class="btn-glow"></div>
                 </button>
             </form>
@@ -85,7 +85,7 @@
                         <div class="step-circle"></div>
                     </div>
                     <div class="step-content">
-                        <h4>OSINT Agent</h2>
+                        <h4>OSINT Agent</h4>
                         <p>Scraping public professional footprint, Github, and social meta...</p>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                         <div class="step-circle"></div>
                     </div>
                     <div class="step-content">
-                        <h4>Corporate Intel Agent</h2>
+                        <h4>Corporate Intel Agent</h4>
                         <p>Crawling infrastructure stacks, team metrics, and company transformations...</p>
                     </div>
                 </div>
@@ -103,7 +103,7 @@
                         <div class="step-circle"></div>
                     </div>
                     <div class="step-content">
-                        <h4>Consensus Council</h2>
+                        <h4>Consensus Council</h4>
                         <p>Fanning outputs to Gemini Pro & Flash to vote on structural alignment...</p>
                     </div>
                 </div>
@@ -112,7 +112,7 @@
                         <div class="step-circle"></div>
                     </div>
                     <div class="step-content">
-                        <h4>Consensus Judge</h2>
+                        <h4>Consensus Judge</h4>
                         <p>Removing speculative claims and compiling Dossier and Evidence Ledger...</p>
                     </div>
                 </div>
@@ -125,25 +125,39 @@
                 <button class="btn-secondary" id="btn-reset">← Start New Analysis</button>
                 <div class="action-badges">
                     <span class="badge border">W&B Weave Traced</span>
-                    <span class="badge fill">Confidence Verified</span>
+                    <span class="badge fill">Scrape Grounded</span>
                 </div>
             </div>
 
-            <!-- Top Hero Segment -->
+            <!-- Top Hero Segment - Scanned Digital Profile -->
             <div class="panel glass dossier-hero">
                 <div class="hero-left">
-                    <span class="hero-label">Target Overview</span>
-                    <h2 id="dossier-title">Alex Mercer @ Acme Robotics</h2>
-                    <p id="dossier-summary" class="lead-text">Executive summary goes here...</p>
+                    <div class="profile-card-header">
+                        <!-- Modern SVG Avatar Placeholder -->
+                        <div class="profile-avatar" id="dossier-avatar-container">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" id="dossier-avatar-svg">
+                                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="currentColor"/>
+                                <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="profile-title-group">
+                            <span class="hero-label">Scanned Digital Footprint</span>
+                            <h2 id="dossier-name">Name</h2>
+                            <p id="dossier-email" class="profile-email">email@domain.com</p>
+                        </div>
+                    </div>
+                    <p id="dossier-bio" class="lead-text">Scanned professional bio details...</p>
                 </div>
+                
                 <div class="hero-right">
                     <div class="vibe-card">
                         <div class="vibe-style">
-                            <span>VIBE PROFILE</span>
-                            <h3 id="dossier-vibe-style">Style</h3>
+                            <span>CURRENT TITLE</span>
+                            <h3 id="dossier-role">Senior Lead / Manager</h3>
                         </div>
                         <div class="vibe-mirror">
-                            <p id="dossier-vibe-mirror">Mirror strategy...</p>
+                            <span class="vibe-label">CURRENT COMPANY</span>
+                            <h4 id="dossier-company" class="profile-company">Company</h4>
                         </div>
                     </div>
                 </div>
@@ -151,27 +165,30 @@
 
             <!-- Core Insight Grid -->
             <div class="dossier-grid">
-                <!-- Left: Gaps & Projects -->
+                <!-- Left: Compliance Gaps -->
                 <div class="grid-col flex-col">
-                    <div class="panel glass expandable flex-grow">
+                    <!-- Red Flags Section -->
+                    <div class="panel glass expandable">
                         <div class="card-header">
                             <div class="card-icon red">▲</div>
-                            <h3>Resume Gaps Identified</h3>
+                            <h3>ATS Compliance Red Flags</h3>
                         </div>
-                        <ul class="gaps-list" id="dossier-gaps">
-                            <!-- Gaps injected dynamically -->
+                        <p class="section-subtitle">Critical parsing traps detected in your resume that trigger automated rejections:</p>
+                        <ul class="gaps-list" id="dossier-red-flags">
+                            <!-- Injected dynamically -->
                         </ul>
                     </div>
 
+                    <!-- Recommended Improvements Section -->
                     <div class="panel glass spotlight">
                         <div class="card-header">
                             <div class="card-icon gold">★</div>
-                            <h3>"Trapdoor" Portfolio Project</h3>
+                            <h3>Recommended Structural Improvements</h3>
                         </div>
-                        <div class="spotlight-content">
-                            <p class="spotlight-tagline">Build this 2-hour mini-project to close your gaps before the interview:</p>
-                            <p id="dossier-trapdoor" class="spotlight-body">Mini project description...</p>
-                        </div>
+                        <p class="section-subtitle">Qualifications or stacked skills standard filters expect you to have to avoid filtration:</p>
+                        <ul class="improvements-list" id="dossier-improvements">
+                            <!-- Injected dynamically -->
+                        </ul>
                     </div>
                 </div>
 
@@ -182,6 +199,7 @@
                             <div class="card-icon blue">♥</div>
                             <h3>Common Ground & Hobbies</h3>
                         </div>
+                        <p class="section-subtitle">Identified professional alignment vectors to establish trust and rapport:</p>
                         <ul class="common-ground-list" id="dossier-common-ground">
                             <!-- Injected dynamically -->
                         </ul>
@@ -196,6 +214,7 @@
                         <div class="card-icon purple">✦</div>
                         <h3>Hyper-Targeted Icebreakers</h3>
                     </div>
+                    <p class="section-subtitle">Tailored, outcomes-oriented conversation hooks regarding their public achievements:</p>
                     <ul class="bullets-list" id="dossier-icebreakers">
                         <!-- Injected dynamically -->
                     </ul>
@@ -206,6 +225,7 @@
                         <div class="card-icon green">◈</div>
                         <h3>Smart Reverse Questions</h3>
                     </div>
+                    <p class="section-subtitle">Reverse-engineered team queries regarding infrastructure stack and workflows:</p>
                     <ul class="bullets-list" id="dossier-questions">
                         <!-- Injected dynamically -->
                     </ul>
