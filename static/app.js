@@ -70,6 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Keep loading panel visible and display the View Swarm Report action button
             viewReportContainer.classList.remove('hidden');
+
+            // Auto-transition to results after 1200ms to ensure the user is never left stuck on the loader
+            setTimeout(() => {
+                if (!loadingSection.classList.contains('hidden')) {
+                    viewReportContainer.classList.add('hidden');
+                    loadingSection.classList.add('hidden');
+                    resultsSection.classList.remove('hidden');
+                }
+            }, 1200);
         } catch (error) {
             console.error('Analysis failed:', error);
             loaderStepsState.active = false;
