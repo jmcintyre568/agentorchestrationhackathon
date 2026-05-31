@@ -611,7 +611,7 @@ def council_vote(
     """
 
     proposal_a = generate_content_with_retry(
-        "gemini-2.5-pro",
+        "gemini-2.5-flash",
         base_instruction
         + "\nFocus on deep structural alignment, resume gaps with fixes, and evidence mapping.",
     ).text
