@@ -37,27 +37,28 @@ document.addEventListener('DOMContentLoaded', () => {
         inputSection.classList.add('hidden');
         loadingSection.classList.remove('hidden');
         
-        // Start simulated/animated timeline progression for subagents
-        animateLoaderSteps();
+        // Start the minimum loader animation sequence
+        const loaderPromise = animateLoaderSteps();
 
         try {
-            // POST request to backend API
-            const response = await fetch('/analyze', {
+            // Trigger API request in parallel
+            const apiPromise = fetch('/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
+            }).then(async (response) => {
+                if (!response.ok) {
+                    throw new Error(`Server returned status: ${response.status}`);
+                }
+                return response.json();
             });
 
-            if (!response.ok) {
-                throw new Error(`Server returned status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            // Wait for BOTH the API response and the loader sequence to finish
+            const [data, _] = await Promise.all([apiPromise, loaderPromise]);
             
-            // Clean up loader and render dossier results
-            clearInterval(loadingInterval);
+            // Render dossier results
             renderDossier(data, payload.recruiter_name, payload.company);
             
             // Transition: Loading -> Results Panel
@@ -93,35 +94,39 @@ document.addEventListener('DOMContentLoaded', () => {
      * Simulates step-by-step progress through the subagent swarm to match real backend delay
      */
     function animateLoaderSteps() {
-        // Reset
-        Object.values(steps).forEach(step => {
-            step.classList.remove('active', 'completed');
-        });
+        return new Promise((resolve) => {
+            // Reset
+            Object.values(steps).forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
 
-        // Step 1: OSINT Active
-        steps.osint.classList.add('active');
+            // Step 1: OSINT Active
+            steps.osint.classList.add('active');
 
-        let tick = 0;
-        loadingInterval = setInterval(() => {
-            tick++;
-            
-            if (tick === 3) {
-                // OSINT Complete, Corp Intel Active
+            setTimeout(() => {
                 steps.osint.classList.remove('active');
                 steps.osint.classList.add('completed');
                 steps.corp.classList.add('active');
-            } else if (tick === 6) {
-                // Corp Intel Complete, Council Vote Active
-                steps.corp.classList.remove('active');
-                steps.corp.classList.add('completed');
-                steps.council.classList.add('active');
-            } else if (tick === 9) {
-                // Council Complete, Judge Resolution Active
-                steps.council.classList.remove('active');
-                steps.council.classList.add('completed');
-                steps.judge.classList.add('active');
-            }
-        }, 1000);
+                
+                setTimeout(() => {
+                    steps.corp.classList.remove('active');
+                    steps.corp.classList.add('completed');
+                    steps.council.classList.add('active');
+                    
+                    setTimeout(() => {
+                        steps.council.classList.remove('active');
+                        steps.council.classList.add('completed');
+                        steps.judge.classList.add('active');
+                        
+                        setTimeout(() => {
+                            steps.judge.classList.remove('active');
+                            steps.judge.classList.add('completed');
+                            resolve(); // Animation finished!
+                        }, 1200);
+                    }, 1200);
+                }, 1200);
+            }, 1200);
+        });
     }
 
     /**
