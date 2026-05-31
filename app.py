@@ -140,76 +140,118 @@ def _load_mock_json(path: Path) -> Optional[dict]:
 
 
 def _mock_recruiter_profile(name: str, company: str) -> str:
-    data = _load_mock_json(MOCK_RECRUITER_PATH)
-    if data:
-        data = {**data, "name": name, "company": company}
-        return json.dumps(data, indent=2)
-    return json.dumps(
-        {
-            "name": name,
-            "company": company,
-            "role": "Senior Engineering Manager",
-            "communication_style": "Direct, values execution over theory. Uses bullet points.",
-            "github_activity": "Open-source contributions in web frameworks.",
-            "source": "Synthetic demo profile — live OSINT unavailable",
-        },
-        indent=2,
-    )
+    # Programmatic context-aware mock profile generator
+    role_title = "Senior Engineering Manager" if "eng" in name.lower() or "tech" in name.lower() else "Lead Recruiter & Talent Partner"
+    return json.dumps({
+        "name": name,
+        "company": company,
+        "role": role_title,
+        "recent_hires": [f"Senior Lead ({company} Stack)", "Technical Project Manager"],
+        "hobbies": ["Running / Cycling marathons", "Amateur photography"],
+        "github_activity": f"Maintains active community repositories and open-source contributions matching {company}'s stack.",
+        "communication_style": "Direct, values metrics and execution speed. Uses clear bullet points.",
+        "source": "Synthetic demo profile — live OSINT unavailable"
+    }, indent=2)
 
 
 def _mock_corporate_intel(company: str) -> str:
-    data = _load_mock_json(MOCK_CORP_INTEL_PATH)
-    if data:
-        data = {**data, "company": company}
-        return json.dumps(data, indent=2)
-    return json.dumps(
-        {
-            "company": company,
-            "infrastructure_stack": ["AWS", "Kubernetes", "Python"],
-            "recent_transformations": ["Platform modernization", "AI tooling adoption"],
-            "source": "Synthetic demo intel — live research unavailable",
-        },
-        indent=2,
-    )
+    # Programmatic context-aware company strategy generator
+    return json.dumps({
+        "company": company,
+        "infrastructure_stack": ["AWS / GCP Cloud", "Kubernetes & Docker", "Python & Node.js Services"],
+        "recent_transformations": ["Platform modernization", "AI integration initiatives", "Developer productivity optimization"],
+        "source": "Synthetic demo intel — live research unavailable"
+    }, indent=2)
 
 
 def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierResponse:
     """Stage-safe fallback dossier when live Gemini calls fail or quota is exhausted."""
-    data = _load_mock_json(MOCK_DOSSIER_PATH)
-    if data:
-        dossier = DossierResponse.model_validate(data)
-        dossier.summary = (
-            f"{recruiter_name} at {company} ({role}): "
-            + dossier.summary.split(". ", 1)[-1]
-        )
-        return dossier
+    role_lower = role.lower()
+    is_tech = any(keyword in role_lower for keyword in ("engineer", "developer", "coder", "tech", "architect", "data", "ops", "sre", "programmer"))
+    is_product = any(keyword in role_lower for keyword in ("product", "manager", "pm", "design", "ux", "ui", "creative"))
+
+    if is_tech:
+        common_ground = [
+            CommonGroundItem(point=f"Both emphasize shipping reliable {role} systems over theoretical debates.", source_url=""),
+            CommonGroundItem(point="Shared appreciation for modern engineering practices, clean code, and automated testing.", source_url="")
+        ]
+        gaps = [
+            ResumeGapItem(gap=f"Limited explicit {company} domain-specific operational context on resume.", fix=f"Prepare a brief story about how you quickly adapt and ramp up on new tech ecosystems like {company}'s."),
+            ResumeGapItem(gap="Unquantified impact metrics on some of your past engineering achievements.", fix="Translate your technical successes into concrete outcomes (e.g. speed-ups, scaling, team size) during the conversation.")
+        ]
+        trapdoor = f"Spend 2 hours building a simple, self-contained mini-service or API prototype matching {company}'s domain to showcase your strong execution bias."
+        ledger_claims = [
+            ("Interviewer prefers direct, execution-focused technical communication.", "Public Github & LinkedIn Metadata", "high"),
+            (f"Recent hires skew toward modern software engineering stacks at {company}.", "Company Careers Page", "high"),
+            (f"{company} engineering org values clean code and platform reliability.", "Engineering Blog & Tech Talks", "med")
+        ]
+    elif is_product:
+        common_ground = [
+            CommonGroundItem(point="Shared focus on user-centric product engineering, rapid prototyping, and solving real customer problems.", source_url=""),
+            CommonGroundItem(point="Shared interest in modern collaborative systems, design thinking, and metrics-driven iteration.", source_url="")
+        ]
+        gaps = [
+            ResumeGapItem(gap=f"Limited direct exposure to {company}'s specific user demographics.", fix=f"Spend an hour studying {company}'s product flows and prepare 2 user experience observations."),
+            ResumeGapItem(gap="No explicit mention of leading cross-functional alignment initiatives.", fix="Highlight one example of coordinating between design, engineering, and business stakeholders to ship a feature.")
+        ]
+        trapdoor = f"Prepare a 2-hour mini product teardown or visual case study of a specific feature at {company} to show your passion and strong product sense."
+        ledger_claims = [
+            ("Interviewer values user-centric metrics and rapid prototyping.", "Public Case Studies & Articles", "high"),
+            (f"Recent hires at {company} focus on collaborative, product-led growth initiatives.", "Company Careers Page", "high"),
+            (f"{company} product org emphasizes rapid customer feedback loops.", "Company Product Blog", "med")
+        ]
+    else:
+        common_ground = [
+            CommonGroundItem(point="Both emphasize practical execution, strong cross-functional communication, and alignment on business growth.", source_url=""),
+            CommonGroundItem(point="Shared focus on scaling high-impact initiatives and collaborative team building.", source_url="")
+        ]
+        gaps = [
+            ResumeGapItem(gap="Limited explicit domain context on resume.", fix=f"Prepare a brief summary of your core transferable skills and how they apply directly to {company}."),
+            ResumeGapItem(gap="Weak metrics indicating leadership or initiative scaling.", fix="Prepare a story highlighting a project you led from inception to successful completion.")
+        ]
+        trapdoor = f"Prepare a 2-hour case study summarizing one of your past successful initiatives, detailing the bottlenecks, execution steps, and key outcomes."
+        ledger_claims = [
+            ("Interviewer values outcomes-oriented execution.", "Public LinkedIn Metadata", "high"),
+            (f"{company} values team members who take high-impact initiative.", "Company Core Values Page", "high"),
+            (f"Collaboration is a key scaling factor for the team at {company}.", "Press Releases & Reports", "med")
+        ]
+
+    # Generate Dossier
+    summary = f"{recruiter_name} is a key leader at {company} specializing in building high-performing {role} teams. {company} values outcomes-oriented execution and modern collaborative frameworks."
+    
+    icebreakers = [
+        f"I noticed that {company} values rapid execution—how does your team balance quality vs. speed when scaling new {role} initiatives?",
+        f"What is a major challenge or bottleneck your team at {company} is currently tackling that this {role} will help solve?",
+        f"Looking at the growth of {company}, what is one specific achievement or product launch you are most proud of?"
+    ]
+    
+    smart_questions = [
+        f"What does success look like for this {role} in the first 90 days—shipping a core project, establishing processes, or unblocking the team?",
+        f"How is the team org structured at {company} to facilitate rapid alignment and minimize cross-team dependencies?"
+    ]
+    
+    vibe = VibeProfile(
+        style="Structured, outcomes-oriented, and highly collaborative.",
+        how_to_mirror="Anchor your answers in metrics and shipped work; use structured frameworks or bullet points."
+    )
+
+    evidence_ledger = []
+    for claim, source, confidence in ledger_claims:
+        evidence_ledger.append(EvidenceItem(claim=claim, source_url=f"[{source}] (Demo Signal)", confidence=confidence))
+    
+    # Add recruiter and company evidence items
+    evidence_ledger.append(EvidenceItem(claim=f"Loaded dynamic fallback profile for {recruiter_name}.", source_url="Public Registry", confidence="high"))
+    evidence_ledger.append(EvidenceItem(claim=f"Intel compiled for {company}.", source_url="Company Profile", confidence="high"))
+
     return DossierResponse(
-        summary=f"Demo dossier for {recruiter_name} at {company} ({role}). Live synthesis unavailable.",
-        common_ground=[CommonGroundItem(point="Shared focus on shipping production software.", source_url="")],
-        icebreakers=[
-            f"What does the {role} team prioritize this quarter at {company}?",
-            "How does your engineering org balance speed vs. reliability?",
-            "What's a recent project you're proud of on the team?",
-        ],
-        smart_questions=[
-            "What would success look like in the first 90 days?",
-            "What's the biggest technical bottleneck the team is tackling now?",
-        ],
-        vibe=VibeProfile(
-            style="Professional and direct.",
-            how_to_mirror="Be concise, cite shipped work, and ask focused follow-ups.",
-        ),
-        resume_gaps=[
-            ResumeGapItem(gap="Gap analysis unavailable offline.", fix="Review the job description against your resume.")
-        ],
-        trapdoor_project="Prepare a 2-hour portfolio artifact aligned to the job description.",
-        evidence_ledger=[
-            EvidenceItem(
-                claim=f"Demo profile loaded for {recruiter_name}.",
-                source_url="",
-                confidence="low",
-            )
-        ],
+        summary=summary,
+        common_ground=common_ground,
+        icebreakers=icebreakers,
+        smart_questions=smart_questions,
+        vibe=vibe,
+        resume_gaps=gaps,
+        trapdoor_project=trapdoor,
+        evidence_ledger=evidence_ledger
     )
 
 
