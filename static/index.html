@@ -78,43 +78,52 @@
             <h3>Orchestrating Agent Swarm...</h3>
             <p class="loader-subtitle">Evaluating candidate-recruiter alignment across public directories</p>
             
-            <div class="agent-timeline">
+            <div class="agent-timeline agent-timeline-horizontal">
                 <div class="timeline-step" id="step-osint">
-                    <div class="step-indicator">
+                    <div class="step-badge">SWARM AGENT 01</div>
+                    <div class="step-header">
                         <div class="step-circle"></div>
-                    </div>
-                    <div class="step-content">
                         <h4>OSINT Agent</h4>
-                        <p>Scraping public professional footprint, Github, and social meta...</p>
                     </div>
+                    <p class="step-desc">Scrapes professional footprints, GitHub metrics, and public social metadata.</p>
+                    <div class="step-console" id="console-osint">
+                        <div class="console-line text-muted">Awaiting swarm activation...</div>
+                    </div>
+                    <div class="step-tech">OSINT Scraper // Google Grounding API</div>
                 </div>
+                
                 <div class="timeline-step" id="step-corp">
-                    <div class="step-indicator">
+                    <div class="step-badge">SWARM AGENT 02</div>
+                    <div class="step-header">
                         <div class="step-circle"></div>
+                        <h4>Corporate Intel</h4>
                     </div>
-                    <div class="step-content">
-                        <h4>Corporate Intel Agent</h4>
-                        <p>Crawling infrastructure stacks, team metrics, and company transformations...</p>
+                    <p class="step-desc">Crawls infrastructure stacks, dev-team metrics, and company bottlenecks.</p>
+                    <div class="step-console" id="console-corp">
+                        <div class="console-line text-muted">Awaiting swarm activation...</div>
                     </div>
+                    <div class="step-tech">Corporate OSINT // Gemini Web Radar</div>
                 </div>
+                
                 <div class="timeline-step" id="step-council">
-                    <div class="step-indicator">
+                    <div class="step-badge">SWARM CONFLICT</div>
+                    <div class="step-header">
                         <div class="step-circle"></div>
-                    </div>
-                    <div class="step-content">
                         <h4>Consensus Council</h4>
-                        <p>Fanning outputs to Gemini Pro & Flash to vote on structural alignment...</p>
                     </div>
+                    <p class="step-desc">Pro & Flash proposers vote, judge merges, evidence ledger compiled.</p>
+                    <div class="step-console" id="console-council">
+                        <div class="console-line text-muted">Awaiting swarm activation...</div>
+                    </div>
+                    <div class="step-tech">Gemini 2.5 Pro + Flash // Weave Guard</div>
                 </div>
-                <div class="timeline-step" id="step-judge">
-                    <div class="step-indicator">
-                        <div class="step-circle"></div>
-                    </div>
-                    <div class="step-content">
-                        <h4>Consensus Judge</h4>
-                        <p>Removing speculative claims and compiling Dossier and Evidence Ledger...</p>
-                    </div>
-                </div>
+            </div>
+            
+            <div class="view-report-container hidden" id="view-report-container">
+                <button type="button" class="btn-submit btn-view-report" id="btn-view-report">
+                    <span>View Swarm Report</span>
+                    <div class="btn-glow"></div>
+                </button>
             </div>
         </section>
 

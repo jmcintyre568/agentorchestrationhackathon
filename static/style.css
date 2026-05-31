@@ -446,44 +446,86 @@ textarea {
 /* --- AGENT TIMELINE --- */
 .agent-timeline {
     width: 100%;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
     text-align: left;
+    margin-top: 1rem;
+    align-self: stretch;
+}
+
+.agent-timeline-horizontal {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1024px) {
+    .agent-timeline {
+        grid-template-columns: 1fr;
+    }
 }
 
 .timeline-step {
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 1.25rem;
     display: flex;
-    gap: 1.5rem;
-    align-items: flex-start;
-    opacity: 0.35;
-    transition: var(--transition-smooth);
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    opacity: 0.25;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
 
 .timeline-step.active {
     opacity: 1;
+    border-color: var(--accent-purple);
+    background: rgba(147, 51, 234, 0.04);
+    box-shadow: 0 8px 32px rgba(147, 51, 234, 0.15), inset 0 0 15px rgba(147, 51, 234, 0.05);
 }
 
 .timeline-step.completed {
-    opacity: 0.8;
+    opacity: 0.85;
+    border-color: var(--accent-green);
+    background: rgba(16, 185, 129, 0.01);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.04);
 }
 
-.step-indicator {
+.step-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: -0.25rem;
+}
+
+.timeline-step.active .step-badge {
+    color: var(--accent-purple);
+}
+
+.timeline-step.completed .step-badge {
+    color: var(--accent-green);
+}
+
+.step-header {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    height: 100%;
-    padding-top: 0.25rem;
+    gap: 0.75rem;
 }
 
 .step-circle {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     border: 2px solid var(--text-muted);
-    background-color: var(--bg-surface);
+    background: transparent;
     transition: var(--transition-smooth);
+    flex-shrink: 0;
 }
 
 .timeline-step.active .step-circle {
@@ -495,19 +537,73 @@ textarea {
 .timeline-step.completed .step-circle {
     border-color: var(--accent-green);
     background-color: var(--accent-green);
-    box-shadow: 0 0 8px var(--accent-green);
+    box-shadow: 0 0 10px var(--accent-green);
 }
 
-.step-content h4 {
+.step-header h4 {
     font-family: var(--font-heading);
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    margin-bottom: 0.2rem;
+    margin: 0;
+    color: var(--text-primary);
 }
 
-.step-content p {
-    font-size: 0.85rem;
+.step-desc {
+    font-size: 0.8rem;
     color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.step-console {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    padding: 0.6rem;
+    font-family: monospace;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    height: 140px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+    scroll-behavior: auto;
+}
+
+.console-line {
+    color: var(--text-secondary);
+    word-break: break-word;
+    transition: none !important;
+}
+
+.console-line.search {
+    color: var(--accent-teal);
+}
+
+.console-line.found {
+    color: var(--accent-green);
+}
+
+.console-line.system {
+    color: var(--accent-purple);
+}
+
+.console-line.error {
+    color: #ef4444;
+}
+
+.step-tech {
+    font-size: 0.65rem;
+    font-family: monospace;
+    color: var(--text-muted);
+    text-align: right;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    padding-top: 0.5rem;
+    margin-top: auto;
 }
 
 /* --- DOSSIER ACTIONS & HERO --- */
@@ -1132,4 +1228,38 @@ textarea {
     display: flex;
     align-items: center;
     gap: 0.4rem;
+}
+
+/* --- VIEW REPORT TRANSITION BUTTON --- */
+.view-report-container {
+    width: 100%;
+    max-width: 400px;
+    margin-top: 3rem;
+    display: flex;
+    justify-content: center;
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.view-report-container.hidden {
+    display: none !important;
+}
+
+.btn-view-report {
+    background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-teal) 100%);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.btn-view-report:hover {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

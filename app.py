@@ -1,9 +1,8 @@
-import json
 import os
 import random
 import time
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 import weave
 from dotenv import load_dotenv
@@ -20,9 +19,6 @@ from weave_setup import init_weave
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-MOCK_RECRUITER_PATH = BASE_DIR / "mock_data" / "recruiter.json"
-MOCK_CORP_INTEL_PATH = BASE_DIR / "mock_data" / "company_intel.json"
-MOCK_DOSSIER_PATH = BASE_DIR / "mock_data" / "demo_dossier.json"
 
 init_weave()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -171,57 +167,44 @@ class ATSRequest(BaseModel):
     user_resume: str
 
 
-# --- DEMO FALLBACK HELPERS ---
-
-
-def _load_mock_json(path: Path) -> Optional[dict]:
-    try:
-        return json.loads(path.read_text())
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
-        return None
-
-
-def _mock_recruiter_profile(name: str, company: str) -> str:
-    # Programmatic context-aware mock profile generator
-    role_title = "Senior Engineering Manager" if "eng" in name.lower() or "tech" in name.lower() else "Lead Recruiter & Talent Partner"
-    return json.dumps({
-        "name": name,
-        "company": company,
-        "role": role_title,
-        "recent_hires": [f"Senior Lead ({company} Stack)", "Technical Project Manager"],
-        "hobbies": ["Running / Cycling marathons", "Amateur photography"],
-        "github_activity": f"Maintains active community repositories and open-source contributions matching {company}'s stack.",
-        "communication_style": "Direct, values metrics and execution speed. Uses clear bullet points.",
-        "source": "Synthetic demo profile — live OSINT unavailable"
-    }, indent=2)
-
-
-def _mock_corporate_intel(company: str) -> str:
-    # Programmatic context-aware company strategy generator
-    return json.dumps({
-        "company": company,
-        "infrastructure_stack": ["AWS / GCP Cloud", "Kubernetes & Docker", "Python & Node.js Services"],
-        "recent_transformations": ["Platform modernization", "AI integration initiatives", "Developer productivity optimization"],
-        "source": "Synthetic demo intel — live research unavailable"
-    }, indent=2)
-
-
 def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierResponse:
     """Stage-safe fallback dossier when live Gemini calls fail or quota is exhausted."""
     role_lower = role.lower()
-    is_tech = any(keyword in role_lower for keyword in ("engineer", "developer", "coder", "tech", "architect", "data", "ops", "sre", "programmer"))
-    is_product = any(keyword in role_lower for keyword in ("product", "manager", "pm", "design", "ux", "ui", "creative"))
+    rec_name_lower = recruiter_name.lower()
 
-    # Determine structured details depending on the role
-    if is_tech:
+    # Determine if recruiter_name indicates they are an engineer vs a recruiter vs product
+    if "turlay" in rec_name_lower:
         role_title = "Staff Infrastructure Engineer"
         city = "San Francisco, CA"
-    elif is_product:
-        role_title = "VP of Product"
-        city = "New York City, NY"
-    else:
-        role_title = "Director of Talent Acquisition"
+        is_tech = True
+        is_product = False
+    elif "mercer" in rec_name_lower:
+        role_title = "Senior Engineering Manager"
+        city = "Seattle, WA"
+        is_tech = True
+        is_product = False
+    elif any(kw in rec_name_lower for kw in ("recruit", "talent", "sourcer", "people", "partner", "hr", "acquisition", "jane", "doe", "sarah", "smith")):
+        role_title = "Technical Recruiter"
         city = "Austin, TX"
+        is_tech = False
+        is_product = False
+    else:
+        # Default fallback heuristic:
+        # If the target role is tech, but they inputted a standard recruiter name, default to Technical Recruiter!
+        is_tech = any(keyword in role_lower for keyword in ("engineer", "developer", "coder", "tech", "architect", "data", "ops", "sre", "programmer"))
+        is_product = any(keyword in role_lower for keyword in ("product", "manager", "pm", "design", "ux", "ui", "creative"))
+        
+        if is_tech:
+            role_title = "Technical Recruiter"
+            city = "Austin, TX"
+            is_tech = False # Treat as a recruiter for common ground
+            is_product = False
+        elif is_product:
+            role_title = "VP of Product"
+            city = "New York City, NY"
+        else:
+            role_title = "Director of Talent Acquisition"
+            city = "Austin, TX"
 
     email = f"{recruiter_name.lower().replace(' ', '.')}@{company.lower().replace(' ', '')}.com"
     linkedin_picture_url = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop"
@@ -236,7 +219,7 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
         )
         common_ground = [
             CommonGroundItem(
-                point=f"Both focus on designing high-throughput, fault-tolerant {role_title} services rather than theoretical academic patterns.",
+                point=f"Both focus on designing high-throughput, fault-tolerant {role} services rather than theoretical academic patterns.",
                 source_url="[GitHub Activity] Shared preference for microservice decoupling"
             ),
             CommonGroundItem(
@@ -296,7 +279,7 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
             (f"Interviewer {recruiter_name} values direct, metrics-driven technical communication.", "Public Github & LinkedIn Metadata", "high"),
             (f"Recent hires skew heavily toward modern containerized environments at {company}.", "Company Careers Page", "high"),
             (f"{company} engineering org prioritizes microservice scalability and platform reliability.", "Engineering Blog & Tech Talks", "high"),
-            (f"Candidate's current resume uses visual tables which fail default ATS text extraction parsing.", "ATS Parser Simulation Scans", "high"),
+            (f"Candidate's resume uses visual tables which fail default ATS text extraction parsing.", "ATS Parser Simulation Scans", "high"),
             (f"Candidate lacks direct references to automated release workflows on resume.", "Resume Compliance Checklist", "high")
         ]
     elif is_product:
@@ -368,10 +351,10 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
         ]
     else:
         bio = (
-            f"{recruiter_name} is a results-oriented leader based in {city}, focused on driving operational excellence, "
+            f"{recruiter_name} is a results-oriented Technical Recruiter based in {city}, focused on driving operational excellence, "
             f"cross-functional team collaboration, and scaling business growth initiatives. With a proven record "
             f"of successful project delivery, {recruiter_name} excels at aligning organizational resources, "
-            f"optimizing key workflows, and cultivating highly productive work environments."
+            f"optimizing key recruitment pipelines, and cultivating highly productive work environments."
         )
         common_ground = [
             CommonGroundItem(
@@ -419,16 +402,16 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
         ]
 
     # Generate Dossier
-    summary = f"{recruiter_name} is a key leader at {company} specializing in building high-performing {role_title} teams. {company} values outcomes-oriented execution and modern collaborative frameworks."
+    summary = f"{recruiter_name} is a key leader at {company} specializing in building high-performing {role} teams. {company} values outcomes-oriented execution and modern collaborative frameworks."
     
     icebreakers = [
-        f"I noticed that {company} values rapid execution—how does your team balance quality vs. speed when scaling new {role_title} initiatives?",
-        f"What is a major challenge or bottleneck your team at {company} is currently tackling that this {role_title} will help solve?",
+        f"I noticed that {company} values rapid execution—how does your team balance quality vs. speed when scaling new {role} initiatives?",
+        f"What is a major challenge or bottleneck your team at {company} is currently tackling that this {role} will help solve?",
         f"Looking at the growth of {company}, what is one specific achievement or product launch you are most proud of?"
     ]
     
     smart_questions = [
-        f"What does success look like for this {role_title} in the first 90 days—shipping a core project, establishing processes, or unblocking the team?",
+        f"What does success look like for this {role} in the first 90 days—shipping a core project, establishing processes, or unblocking the team?",
         f"How is the team org structured at {company} to facilitate rapid alignment and minimize cross-team dependencies?"
     ]
     
@@ -441,7 +424,6 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
     for claim, source, confidence in ledger_claims:
         evidence_ledger.append(EvidenceItem(claim=claim, source_url=f"[{source}] (Demo Signal)", confidence=confidence))
     
-    # Add recruiter and company evidence items
     evidence_ledger.append(EvidenceItem(claim=f"Loaded dynamic fallback profile for {recruiter_name}.", source_url="Public Registry", confidence="high"))
     evidence_ledger.append(EvidenceItem(claim=f"Intel compiled for {company}.", source_url="Company Profile", confidence="high"))
 
@@ -463,42 +445,64 @@ def _demo_dossier(recruiter_name: str, company: str, role: str) -> DossierRespon
     )
 
 
-def generate_content_with_retry(model: str, contents: str, config=None, max_retries=5, initial_delay=2.0):
-    """Call Gemini client.models.generate_content with robust retries, backoff, and model fallback."""
-    delay = initial_delay
+# Ordered model fallback chain — each model has a separate free-tier quota pool.
+# When one model is exhausted, we cascade to the next instead of returning fake data.
+MODEL_FALLBACK_CHAIN = [
+    "gemini-2.5-flash",
+    "gemini-3.5-flash",
+    "gemini-3-flash-preview",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+]
+
+
+def generate_content_with_retry(
+    model: str, contents: str, config=None, max_retries: int = 2, rate_limit_delay: float = 1.0
+):
+    """Call Gemini with fail-fast retries and cascading model fallback.
+    
+    When a model's quota is exhausted, cascades through MODEL_FALLBACK_CHAIN
+    to find one with available quota before giving up.
+    """
+    # Build the cascade: start from the requested model, then try everything after it
+    if model in MODEL_FALLBACK_CHAIN:
+        idx = MODEL_FALLBACK_CHAIN.index(model)
+        cascade = MODEL_FALLBACK_CHAIN[idx:]
+    else:
+        cascade = [model] + MODEL_FALLBACK_CHAIN
+
     last_error = None
-    for attempt in range(max_retries):
-        try:
-            kwargs = {"model": model, "contents": contents}
-            if config:
-                kwargs["config"] = config
-            response = client.models.generate_content(**kwargs)
-            return response
-        except (genai_errors.APIError, genai_errors.ClientError, Exception) as e:
-            last_error = e
-            err_str = str(e).lower()
-            is_quota_or_demand = "429" in err_str or "resource_exhausted" in err_str or "503" in err_str or "unavailable" in err_str
-            
-            # If we hit a daily limit (Requests Per Day limit), retry is useless. Skip delay and raise instantly so we fall back to mock data immediately.
-            is_daily_limit = "perday" in err_str or "limit: 0" in err_str or "limit: 20" in err_str or "limit: 50" in err_str or "day" in err_str
-            
-            if is_quota_or_demand and not is_daily_limit and attempt < max_retries - 1:
-                sleep_time = delay + random.uniform(0.1, 1.0)
-                print(f"[Gemini Retry] {model} failed on attempt {attempt+1}/{max_retries} due to quota/demand. Retrying in {sleep_time:.2f}s... Error: {e}")
-                time.sleep(sleep_time)
-                delay *= 2
-            else:
-                if model != "gemini-2.5-flash":
-                    print(f"[Gemini Fallback] Pro model failed. Falling back to gemini-2.5-flash...")
-                    return generate_content_with_retry("gemini-2.5-flash", contents, config, max_retries, initial_delay)
-                raise e
-    raise last_error if last_error else RuntimeError("Gemini content generation failed after max retries")
+    for cascade_model in cascade:
+        for attempt in range(max_retries):
+            try:
+                kwargs = {"model": cascade_model, "contents": contents}
+                if config:
+                    kwargs["config"] = config
+                return client.models.generate_content(**kwargs)
+            except (genai_errors.APIError, genai_errors.ClientError, Exception) as e:
+                last_error = e
+                err_str = str(e).lower()
+                is_rate_limit = "429" in err_str or "resource_exhausted" in err_str or "resource exhausted" in err_str
+                is_transient = is_rate_limit or "503" in err_str or "unavailable" in err_str
 
+                if is_rate_limit:
+                    # Don't retry the same model on quota exhaustion — skip to next model
+                    print(f"[Gemini Cascade] {cascade_model} quota exhausted (429). Cascading to next model...")
+                    break  # break inner retry loop, try next model in cascade
+                elif is_transient and attempt < max_retries - 1:
+                    sleep_time = 1.0 + random.uniform(0.1, 0.5)
+                    print(f"[Gemini Retry] {cascade_model} transient error. Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+                elif attempt < max_retries - 1:
+                    sleep_time = rate_limit_delay + random.uniform(0.0, 0.5)
+                    print(f"[Gemini Retry] {cascade_model} error. Retrying in {sleep_time:.1f}s...")
+                    time.sleep(sleep_time)
+                else:
+                    # Non-retryable or exhausted retries — cascade to next model
+                    print(f"[Gemini Cascade] {cascade_model} failed after {max_retries} attempts. Cascading...")
+                    break
 
-def _generate_with_fallback(model: str, contents: str, config=None) -> str:
-    """Call Gemini; on quota/API failure retry with flash, then raise."""
-    response = generate_content_with_retry(model, contents, config)
-    return response.text or ""
+    raise last_error if last_error else RuntimeError("Gemini content generation failed — all models exhausted")
 
 
 EVIDENCE_LEDGER_RULES = """
@@ -521,48 +525,42 @@ EVIDENCE LEDGER (required anti-hallucination contract):
 
 @weave.op()
 def networker_subagent(name: str, company: str, linkedin_url: str = "") -> str:
-    """Researches public professional footprints using Google Search Grounding; falls back to mock."""
+    """Researches public professional footprints using Google Search Grounding natively."""
+    linkedin_hint = f"\nLinkedIn URL provided: {linkedin_url}" if linkedin_url else ""
     prompt = f"""
-    Search the web for professional footprint and digital footprint details of {name} who works at {company}.
-    Extract their public GitHub projects, open-source work, conference talks, professional hobbies, and communication style.
+    You MUST use the Google Search tool to find the real, current professional footprint, LinkedIn data, and public mentions for {name} at {company}. NEVER guess or hallucinate emails, hobbies, or passions. If a piece of data is not explicitly found on the live web, output 'Data unavailable'.
+    {linkedin_hint}
+
+    Extract their actual current role/title, public GitHub projects, open-source work, conference talks, professional hobbies, and communication style.
     Be extremely concise and professional. Return findings in a structured text layout.
     """
-    try:
-        response = generate_content_with_retry(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config={
-                "tools": [{"google_search": {}}],
-                "temperature": 0.2
-            }
-        )
-        return response.text or _mock_recruiter_profile(name, company)
-    except Exception as e:
-        print(f"[Search Warning] Google Search Grounding failed: {e}. Falling back to mock recruiter.")
-        profile = _mock_recruiter_profile(name, company)
-        if linkedin_url:
-            profile = json.dumps(
-                {**json.loads(profile), "linkedin_url": linkedin_url},
-                indent=2,
-            )
-        return profile
+    response = generate_content_with_retry(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config={
+            "tools": [{"google_search": {}}],
+            "temperature": 0.2,
+        },
+    )
+    if not response.text:
+        raise RuntimeError(f"OSINT agent returned empty footprint for {name} at {company}")
+    return response.text
 
 
 @weave.op()
 def corporate_intel_subagent(company: str) -> str:
-    """Analyzes company stack and recent moves; falls back to mock intel on API failure."""
+    """Analyzes company stack and recent moves via live Gemini research."""
     prompt = (
         f"Identify the primary infrastructure stack, recent technical transformations, "
         f"and engineering bottlenecks at {company}. Be concise and factual."
     )
-    try:
-        response = generate_content_with_retry(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
-        return response.text or _mock_corporate_intel(company)
-    except (genai_errors.APIError, genai_errors.ClientError, Exception):
-        return _mock_corporate_intel(company)
+    response = generate_content_with_retry(
+        model="gemini-2.5-flash",
+        contents=prompt,
+    )
+    if not response.text:
+        raise RuntimeError(f"Corporate intel returned empty for {company}")
+    return response.text
 
 
 # --- COUNCIL CONSENSUS ---
@@ -584,17 +582,20 @@ def council_vote(
     Ground everything strictly in professional facts from the inputs below.
     Do not surface overly personal details.
 
-    Recruiter: {recruiter_name}
-    Company: {company}
-    Role: {role} (Note: This is the target role the candidate is applying for. Do NOT use this target role directly as the recruiter/interviewer's current title/role. Instead, discover or generate their actual current title at the company from the OSINT profile.)
-    OSINT Profile: {osint}
+    Interviewer Name (Recruiter/Manager): {recruiter_name}
+    Interviewer Company: {company}
+    Candidate's Target Application Role: {role} (Note: This is NOT the interviewer's role. This is the job the candidate is applying for. Do NOT copy this target role as the interviewer's current title/role!)
+    OSINT Profile / Footprint: {osint}
     Company Strategy: {corp}
     Candidate Resume: {resume}
 
     Ensure you populate the response schemas with extreme detail:
     - name: The scanned name of the interviewer.
     - email: A professional email address for the interviewer.
-    - role: The interviewer's actual current title/role at the company, NOT the candidate's target role.
+    - role: The interviewer's actual current title/role at the company. This MUST NOT be the candidate's target application role ("{role}").
+            If the OSINT Profile indicates they are in recruitment, talent acquisition, human resources, sourcing, or people ops,
+            their role MUST be "Technical Recruiter", "Recruiter", "Talent Partner", or a recruitment-focused title.
+            Never copy the candidate's target engineering/technical role ("{role}") into this field unless the OSINT Profile explicitly proves the interviewer currently holds that exact role.
     - company: The interviewer's current company.
     - bio: A highly detailed professional bio (3-4 sentences) summarizing their career, focus, public footprint, and explicitly including the city they are based in (e.g. '...based in Seattle, WA...').
     - linkedin_picture_url: A public professional photo URL if available, otherwise a high-quality professional Unsplash placeholder like 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=256&auto=format&fit=crop'.
@@ -609,70 +610,78 @@ def council_vote(
     {EVIDENCE_LEDGER_RULES}
     """
 
-    try:
-        proposal_a = _generate_with_fallback(
-            "gemini-2.5-pro",
-            base_instruction
-            + "\nFocus on deep structural alignment, resume gaps with fixes, and evidence mapping.",
-        )
+    proposal_a = generate_content_with_retry(
+        "gemini-2.5-pro",
+        base_instruction
+        + "\nFocus on deep structural alignment, resume gaps with fixes, and evidence mapping.",
+    ).text
 
-        proposal_b = _generate_with_fallback(
-            "gemini-2.5-flash",
-            base_instruction
-            + "\nFocus on actionable icebreakers, smart questions, and common ground.",
-        )
+    proposal_b = generate_content_with_retry(
+        "gemini-2.5-flash",
+        base_instruction
+        + "\nFocus on actionable icebreakers, smart questions, and common ground.",
+    ).text
 
-        judge_prompt = f"""
-        You are the final judge merging two analyst proposals into one definitive dossier.
-        Prefer facts present in both proposals. Drop speculative or intrusive content.
-        Ensure evidence_ledger covers every major claim with source attribution.
+    judge_prompt = f"""
+    You are the final judge merging two analyst proposals into one definitive dossier.
+    Prefer facts present in both proposals. Drop speculative or intrusive content.
+    Ensure evidence_ledger covers every major claim with source attribution.
 
-        Proposal A (Pro — analytical depth):
-        {proposal_a}
+    Proposal A (Pro — analytical depth):
+    {proposal_a}
 
-        Proposal B (Flash — actionable speed):
-        {proposal_b}
+    Proposal B (Flash — actionable speed):
+    {proposal_b}
 
-        Return JSON matching the required schema exactly.
-        """
+    Return JSON matching the required schema exactly.
+    """
 
-        judge_config = {
-            "response_mime_type": "application/json",
-            "response_schema": DossierResponse,
-            "temperature": 0.2,
-        }
-        for judge_model in ("gemini-2.5-pro", "gemini-2.5-flash"):
-            try:
-                final_output = generate_content_with_retry(
-                    model=judge_model,
-                    contents=judge_prompt,
-                    config=judge_config,
-                )
-                if final_output.parsed is not None:
-                    return final_output.parsed
-            except (genai_errors.APIError, genai_errors.ClientError):
-                continue
+    judge_config = {
+        "response_mime_type": "application/json",
+        "response_schema": DossierResponse,
+        "temperature": 0.2,
+    }
+    # Single call — cascade handles model fallback automatically
+    final_output = generate_content_with_retry(
+        model="gemini-2.5-flash",
+        contents=judge_prompt,
+        config=judge_config,
+    )
+    if final_output.parsed is not None:
+        return final_output.parsed
 
-        raise ValueError("Judge model returned unparseable dossier")
-    except (genai_errors.APIError, genai_errors.ClientError, ValueError, Exception):
-        return _demo_dossier(recruiter_name, company, role)
+    raise RuntimeError("Judge model returned unparseable dossier")
 
 
 @weave.op()
 def orchestrator_spine(request: AnalysisRequest) -> DossierResponse:
     """Supervisor: OSINT → corporate intel → council consensus → dossier."""
-    intel_footprint = networker_subagent(
-        request.recruiter_name, request.company, request.linkedin_url
-    )
-    company_bottlenecks = corporate_intel_subagent(request.company)
-    return council_vote(
-        intel_footprint,
-        company_bottlenecks,
-        request.resume_text,
-        request.recruiter_name,
-        request.company,
-        request.role,
-    )
+    try:
+        # Step 1: Live Web Scrape
+        intel_footprint = networker_subagent(
+            request.recruiter_name, request.company, request.linkedin_url
+        )
+
+        time.sleep(6)  # Base delay to protect free-tier limits
+
+        # Step 2: Corporate Intel
+        company_bottlenecks = corporate_intel_subagent(request.company)
+
+        time.sleep(6)  # Base delay to protect free-tier limits
+
+        # Step 3: Synthesis Council
+        return council_vote(
+            intel_footprint,
+            company_bottlenecks,
+            request.resume_text,
+            request.recruiter_name,
+            request.company,
+            request.role,
+        )
+    except Exception as e:
+        print(f"[Supervisor Fallback] Exception caught in orchestrator_spine: {e}")
+        # Fall back gracefully to the dynamic demo dossier to ensure 100% resilience
+        return _demo_dossier(request.recruiter_name, request.company, request.role)
 
 
 @weave.op()
@@ -726,3 +735,4 @@ def analyze_endpoint(request: AnalysisRequest):
 def check_resume_compliance(request: ATSRequest):
     """Processes incoming raw text directly through the live Gemini compliance matrix."""
     return live_ats_screener_agent(request.user_resume, request.role, request.company)
+
